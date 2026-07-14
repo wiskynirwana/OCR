@@ -1,12 +1,15 @@
 FROM php:8.4-fpm
 
+# Install Node.js 20
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+
 # System dependencies
 RUN apt-get update && apt-get install -y \
     git curl zip unzip libpng-dev libjpeg-dev libfreetype6-dev \
     libonig-dev libxml2-dev libzip-dev \
     tesseract-ocr tesseract-ocr-ind tesseract-ocr-eng \
     python3 python3-pip python3-opencv \
-    nginx supervisor \
+    nodejs nginx supervisor \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # PHP extensions
@@ -25,6 +28,9 @@ COPY . .
 
 RUN COMPOSER_ALLOW_SUPERUSER=1 composer install --no-dev --optimize-autoloader
 
+# Build frontend assets
+RUN npm install && npm run build
+
 RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache \
     && chmod -R 775 /var/www/storage /var/www/bootstrap/cache
 
@@ -42,7 +48,7 @@ RUN echo 'server { \
 
 RUN echo '[supervisord]\nnodaemon=true\n\
 [program:php-fpm]\ncommand=php-fpm\nautostart=true\nautorestart=true\n\
-[program:nginx]\ncommand=nginx -g "daemon off;"\nautostart=true\nautorestart=true' \
+[program:nginx]\ncommand=/bin/sh -c "envsubst \$PORT < /etc/nginx/sites-available/default > /etc/nginx/sites-enabled/default && nginx -g '\''daemon off;'\''" \nautostart=true\nautorestart=true' \
 > /etc/supervisor/conf.d/app.conf
 
 EXPOSE 80
