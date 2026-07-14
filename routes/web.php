@@ -70,8 +70,18 @@ Route::middleware('auth')->group(function () {
 
 Route::get('/auth/google', [App\Http\Controllers\Auth\GoogleController::class, 'redirect'])
     ->name('auth.google');
-
-Route::get('/auth/google/callback', [App\Http\Controllers\Auth\GoogleController::class, 'callback'])
-    ->name('auth.google.callback');
+Route::get('/debug-oauth', function () {
+    return [
+        'app_url' => config('app.url'),
+        'google_redirect' => config('services.google.redirect'),
+        'google_client_id' => config('services.google.client_id') ? 'SET' : 'NOT SET',
+    ];
+});Route::get('/debug-oauth', function () {
+    return [
+        'app_url' => config('app.url'),
+        'google_redirect' => config('services.google.redirect'),
+        'google_client_id' => config('services.google.client_id') ? 'SET' : 'NOT SET',
+    ];
+});
 
 require __DIR__.'/auth.php';
