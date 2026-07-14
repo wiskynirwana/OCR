@@ -1,0 +1,68 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    body {
+        @apply bg-paper text-ink antialiased;
+    }
+
+    /* Sembunyikan elemen Alpine sebelum framework siap (dipakai x-show) */
+    [x-cloak] {
+        display: none !important;
+    }
+}
+
+@layer components {
+
+    /* ---- Kartu / surface ---- */
+    .card {
+        @apply bg-surface border border-line rounded-2xl shadow-card;
+    }
+
+    /* ---- Tombol ---- */
+    .btn {
+        @apply inline-flex items-center justify-center gap-2 rounded-xl text-sm font-medium
+               px-4 py-2.5 transition focus:outline-none focus-visible:ring-2
+               focus-visible:ring-pine/30 disabled:opacity-40 disabled:cursor-not-allowed;
+    }
+    .btn-primary {
+        @apply btn text-white bg-pine hover:bg-pine-dark;
+    }
+    .btn-ghost {
+        @apply btn text-ink bg-surface border border-line hover:bg-paper;
+    }
+    .btn-danger {
+        @apply btn text-white bg-danger hover:bg-danger-dark focus-visible:ring-danger/30;
+    }
+
+    /* ---- Field form ---- */
+    .field {
+        @apply block w-full rounded-xl border border-line bg-paper/50 px-3.5 py-2.5 text-sm text-ink
+               placeholder:text-ink-faint transition
+               focus:border-pine focus:bg-white focus:ring-2 focus:ring-pine/20 focus:outline-none;
+    }
+    .field-label {
+        @apply block mb-1.5 text-sm font-medium text-ink;
+    }
+    .field-hint {
+        @apply mt-1.5 text-xs text-ink-faint;
+    }
+
+    /* ---- Badge status ---- */
+    .badge {
+        @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
+    }
+    .badge-success { @apply badge bg-pine-soft text-pine-dark; }
+    .badge-info    { @apply badge bg-clay-soft text-clay-dark; }
+    .badge-danger  { @apply badge bg-danger-soft text-danger-dark; }
+    .badge-muted   { @apply badge bg-line/60 text-ink-soft; }
+
+    /* ---- Alert ---- */
+    .alert {
+        @apply flex items-start gap-2.5 p-4 mb-4 text-sm rounded-xl border;
+    }
+    .alert-success { @apply alert text-pine-dark bg-pine-soft border-pine/20; }
+    .alert-danger  { @apply alert text-danger-dark bg-danger-soft border-danger/20; }
+    .alert-info    { @apply alert text-clay-dark bg-clay-soft border-clay/20; }
+}
