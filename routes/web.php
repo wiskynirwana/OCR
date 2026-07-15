@@ -70,6 +70,9 @@ Route::middleware('auth')->group(function () {
 
 Route::get('/auth/google', [App\Http\Controllers\Auth\GoogleController::class, 'redirect'])
     ->name('auth.google');
+
+Route::get('/auth/google/callback', [App\Http\Controllers\Auth\GoogleController::class, 'callback']);
+
 Route::get('/debug-oauth', function () {
     return [
         'app_url' => config('app.url'),
