@@ -8,7 +8,7 @@
                     Selamat datang, {{ auth()->user()->name }}
                 </h1>
                 <p class="text-sm mt-1 text-ink-soft">
-                    Sistem Rename Otomatis Arsip Dokumen
+                    Sistem Rename Otomatis Arsip Digital
                 </p>
             </div>
 
