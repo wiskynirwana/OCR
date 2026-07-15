@@ -71,17 +71,22 @@ RUN sed -i 's|^listen = .*|listen = 127.0.0.1:9000|' /usr/local/etc/php-fpm.d/ww
     && sed -i 's|^user = .*|;user = www-data|; s|^group = .*|;group = www-data|' /usr/local/etc/php-fpm.d/www.conf
 
 # Startup: render nginx config dengan PORT (HF Spaces = 7860),
-# jalankan migrasi, baru start supervisord
+# siapkan SQLite bila dipakai, jalankan migrasi, baru start supervisord
 RUN printf '#!/bin/sh\n\
 export PORT="${PORT:-7860}"\n\
 mkdir -p /tmp/nginx\n\
 envsubst "\\$PORT" < /etc/nginx/nginx.conf.template > /tmp/nginx.conf.rendered\n\
 cp /tmp/nginx.conf.rendered /etc/nginx/nginx.conf || true\n\
+if [ "${DB_CONNECTION:-sqlite}" = "sqlite" ]; then\n\
+  touch /var/www/database/database.sqlite\n\
+  chmod 666 /var/www/database/database.sqlite\n\
+fi\n\
 php artisan config:clear\n\
 php artisan migrate --force || true\n\
 php artisan storage:link || true\n\
 exec /usr/bin/supervisord -c /etc/supervisor/conf.d/app.conf\n' > /start.sh \
     && chmod +x /start.sh \
+    && chmod 777 /var/www/database \
     && chmod 777 /etc/nginx /etc/nginx/nginx.conf 2>/dev/null; true
 
 EXPOSE 7860
