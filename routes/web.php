@@ -74,13 +74,8 @@ Route::get('/debug-oauth', function () {
     return [
         'app_url' => config('app.url'),
         'google_redirect' => config('services.google.redirect'),
-        'google_client_id' => config('services.google.client_id') ? 'SET' : 'NOT SET',
-    ];
-});Route::get('/debug-oauth', function () {
-    return [
-        'app_url' => config('app.url'),
-        'google_redirect' => config('services.google.redirect'),
-        'google_client_id' => config('services.google.client_id') ? 'SET' : 'NOT SET',
+        'google_client_id' => config('services.google.client_id'),
+        'google_secret' => config('services.google.client_secret') ? 'SET' : 'NOT SET',
     ];
 });
 
