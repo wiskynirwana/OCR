@@ -66,9 +66,9 @@ stdout_logfile=/dev/stdout\nstdout_logfile_maxbytes=0\nstderr_logfile=/dev/stder
 stdout_logfile=/dev/stdout\nstdout_logfile_maxbytes=0\nstderr_logfile=/dev/stderr\nstderr_logfile_maxbytes=0\n' \
 > /etc/supervisor/conf.d/app.conf
 
-# php-fpm listen di TCP & jalan tanpa root
-RUN sed -i 's|^listen = .*|listen = 127.0.0.1:9000|' /usr/local/etc/php-fpm.d/www.conf \
-    && sed -i 's|^user = .*|;user = www-data|; s|^group = .*|;group = www-data|' /usr/local/etc/php-fpm.d/www.conf
+# php-fpm listen di TCP. Directive user/group tetap ada:
+# dipakai saat jalan sebagai root (Railway), diabaikan saat non-root (HF Spaces)
+RUN sed -i 's|^listen = .*|listen = 127.0.0.1:9000|' /usr/local/etc/php-fpm.d/www.conf
 
 # Startup: render nginx config dengan PORT (HF Spaces = 7860),
 # siapkan SQLite bila dipakai, jalankan migrasi, baru start supervisord
