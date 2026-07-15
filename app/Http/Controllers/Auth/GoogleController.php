@@ -57,8 +57,12 @@ class GoogleController extends Controller
             $user->email_verified_at = now();
         }
 
-        // Simpan/update google_id
+        // Simpan/update google_id. Email dari Google sudah terverifikasi,
+        // jadi tandai verified juga untuk akun lama yang belum verifikasi
         $user->google_id = $googleUser->getId();
+        if (!$user->email_verified_at) {
+            $user->email_verified_at = now();
+        }
         $user->save();
 
         Auth::login($user, true);

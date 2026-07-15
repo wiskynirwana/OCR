@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Daftar — Sistem Rename Otomatis Arsip</title>
+    <title>Daftar — Sistem Rename Otomatis Arsip Digital</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -17,7 +17,7 @@
         <div class="text-center mb-8">
             <img src="{{ asset('images/logo a.png') }}" alt="Logo" class="w-12 h-12 object-contain mx-auto mb-4">
             <h1 class="text-lg font-semibold text-ink">Buat akun</h1>
-            <p class="text-sm text-ink-soft mt-0.5">Sistem Rename Otomatis Arsip</p>
+            <p class="text-sm text-ink-soft mt-0.5">Sistem Rename Otomatis Arsip Digital</p>
         </div>
 
         <div class="bg-surface border border-line rounded-2xl shadow-card p-6">
