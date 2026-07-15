@@ -6,7 +6,8 @@ RUN apt-get update && apt-get install -y \
     git curl zip unzip libpng-dev libjpeg-dev libfreetype6-dev \
     libonig-dev libxml2-dev libzip-dev libpq-dev \
     tesseract-ocr tesseract-ocr-ind tesseract-ocr-eng \
-    python3 python3-pip python3-opencv \
+    poppler-utils \
+    python3 python3-pip python3-opencv python-is-python3 \
     nodejs nginx supervisor gettext-base \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
