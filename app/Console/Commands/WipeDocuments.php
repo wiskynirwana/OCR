@@ -21,7 +21,7 @@ class WipeDocuments extends Command
 
         // Tanpa global scope 'owner' — sapu milik semua user.
         $jumlah = Document::withoutGlobalScope('owner')->count();
-        Document::withoutGlobalScope('owner')->query()->delete();
+        Document::withoutGlobalScope('owner')->delete();
 
         foreach (['uploads', 'outputs', 'temp'] as $dir) {
             Storage::deleteDirectory($dir);
