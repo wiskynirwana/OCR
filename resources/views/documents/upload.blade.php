@@ -259,6 +259,10 @@
 
                 actions.innerHTML = '';
                 chkWrap.classList.add('hidden');
+                // Checkbox baris yang tidak lagi bisa dikonfirmasi ikut di-uncheck,
+                // supaya tidak terhitung "terpilih" secara tersembunyi.
+                const chk = row.querySelector('.row-check');
+                if (chk && doc.status !== 'processed') chk.checked = false;
                 dupEl.classList.add('hidden');
                 dupEl.innerHTML = '';
 
@@ -330,11 +334,15 @@
 
             function refreshBulkUi() {
                 refreshSummary();
-                const checks  = Array.from(resultList.querySelectorAll('.row-check'));
+                // Hitung hanya checkbox yang benar-benar tampil (baris berstatus
+                // processed) — baris confirmed checkbox-nya disembunyikan.
+                const checks  = Array.from(resultList.querySelectorAll('.row-check'))
+                    .filter(c => !c.closest('.row-check-wrap').classList.contains('hidden'));
                 const checked = checks.filter(c => c.checked);
 
-                // Tampilkan kontrol bulk hanya kalau ada yang bisa dikonfirmasi.
-                if (checks.length > 0) {
+                // Kontrol bulk tampil selama kartu hasil ada isinya; tapi kalau
+                // sudah tidak ada yang bisa dikonfirmasi, keduanya dimatikan.
+                if (docsState.length > 0) {
                     selAllWrap.classList.remove('hidden');
                     selAllWrap.classList.add('inline-flex');
                     confirmBtn.classList.remove('hidden');
@@ -343,9 +351,15 @@
                     selAllWrap.classList.remove('inline-flex');
                     confirmBtn.classList.add('hidden');
                 }
+                const adaYangBisa = checks.length > 0;
+                selAll.disabled = !adaYangBisa;
+                selAllWrap.classList.toggle('opacity-50', !adaYangBisa);
+                selAllWrap.classList.toggle('cursor-not-allowed', !adaYangBisa);
                 confirmCount.textContent = checked.length;
                 confirmBtn.disabled = checked.length === 0;
-                selAll.checked = checks.length > 0 && checked.length === checks.length;
+                confirmBtn.classList.toggle('opacity-50', checked.length === 0);
+                confirmBtn.classList.toggle('cursor-not-allowed', checked.length === 0);
+                selAll.checked = adaYangBisa && checked.length === checks.length;
                 selAll.indeterminate = checked.length > 0 && checked.length < checks.length;
             }
 
@@ -453,7 +467,13 @@
             });
 
             selAll.addEventListener('change', function () {
-                resultList.querySelectorAll('.row-check').forEach(c => { c.checked = selAll.checked; });
+                if (selAll.disabled) return;
+                // Hanya centang checkbox baris yang masih tampil (bisa dikonfirmasi).
+                resultList.querySelectorAll('.row-check').forEach(c => {
+                    if (!c.closest('.row-check-wrap').classList.contains('hidden')) {
+                        c.checked = selAll.checked;
+                    }
+                });
                 refreshBulkUi();
             });
 
