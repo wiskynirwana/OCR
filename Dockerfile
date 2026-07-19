@@ -85,13 +85,12 @@ if [ "${DB_CONNECTION:-sqlite}" = "sqlite" ]; then\n\
 fi\n\
 echo "=== Running config:clear ===" >&2\n\
 php artisan config:clear\n\
-echo "=== Running migrations ===" >&2\n\
-php artisan migrate --force\n\
+echo "=== Running migrations (timeout 60s) ===" >&2\n\
+timeout 60 php artisan migrate --force || echo "=== WARN: migrate gagal/timeout — boot tetap dilanjutkan ===" >&2\n\
 echo "=== Creating storage link ===" >&2\n\
-php artisan storage:link\n\
+php artisan storage:link || true\n\
 echo "=== Starting supervisord ===" >&2\n\
-/usr/bin/supervisord -c /etc/supervisor/conf.d/app.conf\n\
-echo "=== supervisord exited with code $? ===" >&2\n' > /start.sh \
+exec /usr/bin/supervisord -c /etc/supervisor/conf.d/app.conf\n' > /start.sh \
     && chmod +x /start.sh \
     && chmod 777 /var/www/database \
     && chmod 777 /etc/nginx /etc/nginx/nginx.conf 2>/dev/null; true
