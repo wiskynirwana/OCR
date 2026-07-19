@@ -104,7 +104,7 @@ class DocumentUploadController extends Controller
         $documents = Document::where('batch_id', $batchId)->orderBy('id')->get();
 
         if ($documents->isEmpty()) {
-            return response()->json(['message' => 'Batch tidak ditemukan.'], 404);
+            return response()->json(['message' => 'Folder tidak ditemukan.'], 404);
         }
 
         return response()->json([
@@ -285,7 +285,7 @@ public function batchResult(string $batchId)
 
     if ($documents->isEmpty()) {
         return redirect()->route('documents.upload')
-            ->with('error', 'Batch tidak ditemukan.');
+            ->with('error', 'Folder tidak ditemukan.');
     }
 
     // Peringatan duplikat per dokumen: [id => [nama file kembarannya, ...]]
@@ -379,7 +379,7 @@ public function downloadZip(Request $request)
     } elseif (count($selected) > 1) {
         $joined = implode(' + ', $selected);
         if (strlen($joined) > 100) {
-            $joined = count($selected) . ' BATCH - ' . now()->format('Ymd-His');
+            $joined = count($selected) . ' FOLDER - ' . now()->format('Ymd-His');
         }
         $zipFileName = $joined . '.zip';
     } else {

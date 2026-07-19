@@ -146,7 +146,7 @@
                                         <label class="field-label">Tanggal</label>
                                         <input type="text" name="tanggal" placeholder="YYYYMMDD"
                                             value="{{ old('tanggal', $data['tanggal'] ?? '') }}" class="field">
-                                        <p class="field-hint">sContoh: 20260101.</p>
+                                        <p class="field-hint">Contoh: 20260101.</p>
                                     </div>
 
                                     <div class="md:col-span-2">
@@ -168,11 +168,9 @@
                             <div class="mt-6 flex items-center gap-3">
                                 <button type="submit" class="btn-primary">Simpan Koreksi</button>
 
-                                @if ($document->batch_id)
-                                    <a href="{{ route('documents.batch', $document->batch_id) }}" class="btn-ghost">
-                                        Kembali ke Batch
-                                    </a>
-                                @endif
+                                <a href="{{ route('documents.upload') }}" class="btn-ghost">
+                                    Kembali ke Upload
+                                </a>
                             </div>
                         </form>
                     </div>
