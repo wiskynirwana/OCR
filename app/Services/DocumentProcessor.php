@@ -24,6 +24,8 @@ class DocumentProcessor
     // $knownType : jenis dari folder upload; kalau null → dideteksi otomatis
     public function process(Document $document, string $pdfPath, ?string $knownType = null): Document
     {
+        $pages = [];
+
         try {
             $this->log($document, 'mulai', 'info', "Memproses {$document->original_filename}");
 
@@ -84,6 +86,12 @@ class DocumentProcessor
             $this->log($document, 'error', 'error', $e->getMessage());
             $document->update(['status' => 'error', 'error_message' => $e->getMessage()]);
             return $document;
+        } finally {
+            // Bersihkan folder temp hasil konversi PDF→PNG (sukses maupun gagal),
+            // supaya storage/app/temp tidak menumpuk gambar 300 DPI.
+            if (!empty($pages)) {
+                \Illuminate\Support\Facades\File::deleteDirectory(dirname($pages[0]));
+            }
         }
     }
 
