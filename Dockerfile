@@ -74,6 +74,7 @@ RUN sed -i 's|^listen = .*|listen = 127.0.0.1:9000|' /usr/local/etc/php-fpm.d/ww
 # Startup: render nginx config dengan PORT (HF Spaces = 7860),
 # siapkan SQLite bila dipakai, jalankan migrasi, baru start supervisord
 RUN printf '#!/bin/sh\n\
+set -x\n\
 export PORT="${PORT:-7860}"\n\
 mkdir -p /tmp/nginx\n\
 envsubst "\\$PORT" < /etc/nginx/nginx.conf.template > /tmp/nginx.conf.rendered\n\
@@ -82,10 +83,15 @@ if [ "${DB_CONNECTION:-sqlite}" = "sqlite" ]; then\n\
   touch /var/www/database/database.sqlite\n\
   chmod 666 /var/www/database/database.sqlite\n\
 fi\n\
+echo "=== Running config:clear ===" >&2\n\
 php artisan config:clear\n\
-php artisan migrate --force || true\n\
-php artisan storage:link || true\n\
-exec /usr/bin/supervisord -c /etc/supervisor/conf.d/app.conf\n' > /start.sh \
+echo "=== Running migrations ===" >&2\n\
+php artisan migrate --force\n\
+echo "=== Creating storage link ===" >&2\n\
+php artisan storage:link\n\
+echo "=== Starting supervisord ===" >&2\n\
+/usr/bin/supervisord -c /etc/supervisor/conf.d/app.conf\n\
+echo "=== supervisord exited with code $? ===" >&2\n' > /start.sh \
     && chmod +x /start.sh \
     && chmod 777 /var/www/database \
     && chmod 777 /etc/nginx /etc/nginx/nginx.conf 2>/dev/null; true
