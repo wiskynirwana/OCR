@@ -120,21 +120,18 @@
                                         <label class="field-label">Nomor Surat</label>
                                         <input type="text" name="seq" placeholder="001"
                                             value="{{ old('seq', $data['seq'] ?? '') }}" class="field">
-                                        <p class="field-hint">Dari field internal <code>seq</code>. Contoh: 001, 011.</p>
                                     </div>
 
                                     <div>
                                         <label class="field-label">Jenis</label>
                                         <input type="text" name="kode"
                                             value="{{ old('kode', $data['kode'] ?? '') }}" class="field">
-                                        <p class="field-hint">Dari field internal <code>kode</code>. Contoh: SPK1, SPK2, SPK3.</p>
                                     </div>
 
                                     <div>
                                         <label class="field-label">Status Pegawai</label>
                                         @if ($type === 'sk')
                                             <input type="text" name="status_pegawai" value="PTY" class="field bg-line/40" readonly>
-                                            <p class="field-hint">SK PEG khusus status PTY.</p>
                                         @else
                                             @php $statusValue = old('status_pegawai', $data['status'] ?? ''); @endphp
                                             <select name="status_pegawai" class="field">
@@ -149,7 +146,7 @@
                                         <label class="field-label">Tanggal</label>
                                         <input type="text" name="tanggal" placeholder="YYYYMMDD"
                                             value="{{ old('tanggal', $data['tanggal'] ?? '') }}" class="field">
-                                        <p class="field-hint">Format: YYYYMMDD. Contoh: 20260101.</p>
+                                        <p class="field-hint">sContoh: 20260101.</p>
                                     </div>
 
                                     <div class="md:col-span-2">
