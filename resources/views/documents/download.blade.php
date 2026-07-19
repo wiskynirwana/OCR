@@ -24,7 +24,7 @@
                         Pilih semua ({{ $groups->count() }} folder)
                     </label>
 
-                    <button type="submit" class="btn-primary">
+                    <button type="submit" id="download-btn" class="btn-primary" disabled>
                         <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                         </svg>
@@ -84,20 +84,29 @@
         (function () {
             const selectAll = document.getElementById('select-all');
             const checks = Array.from(document.querySelectorAll('.folder-check'));
+            const downloadBtn = document.getElementById('download-btn');
 
             function refresh() {
                 if (!selectAll) return;
                 const checked = checks.filter(c => c.checked).length;
                 selectAll.checked = checked > 0 && checked === checks.length;
                 selectAll.indeterminate = checked > 0 && checked < checks.length;
+                // Tombol download baru aktif setelah minimal 1 folder dipilih.
+                if (downloadBtn) {
+                    downloadBtn.disabled = checked === 0;
+                    downloadBtn.classList.toggle('opacity-50', checked === 0);
+                    downloadBtn.classList.toggle('cursor-not-allowed', checked === 0);
+                }
             }
 
             if (selectAll) {
                 selectAll.addEventListener('change', function () {
                     checks.forEach(c => { c.checked = selectAll.checked; });
+                    refresh();
                 });
             }
             checks.forEach(c => c.addEventListener('change', refresh));
+            refresh();
         })();
     </script>
 </x-app-layout>
