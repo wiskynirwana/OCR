@@ -92,7 +92,8 @@
 
                         <div class="pt-1">
                             @if ($document->status === 'processed')
-                                <form action="{{ route('documents.confirm', $document) }}" method="POST">
+                                <form action="{{ route('documents.confirm', $document) }}" method="POST"
+                                    onsubmit="const b=this.querySelector('button'); b.disabled=true; b.textContent='Memproses…';">
                                     @csrf
                                     <button type="submit" class="btn-primary w-full">
                                         Konfirmasi Rename

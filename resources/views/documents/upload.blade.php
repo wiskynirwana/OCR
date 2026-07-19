@@ -407,7 +407,11 @@
                 if (!doc) return;
 
                 if (btn.dataset.rowAct === 'confirm') {
+                    // Jangan proses dua kali: baris yang sudah/sedang dikonfirmasi diabaikan.
+                    if (doc.status !== 'processed' || doc._confirming) return;
+                    doc._confirming = true;
                     btn.disabled = true;
+                    btn.textContent = 'Memproses…';
                     try {
                         const res = await fetch(doc.confirm_url, {
                             method: 'POST',
@@ -420,6 +424,7 @@
                             alert(err && err.message ? err.message : 'Gagal konfirmasi.');
                         }
                     } catch (e2) { alert('Gagal konfirmasi. Periksa koneksi.'); }
+                    doc._confirming = false;
                     setRow(doc);
                 }
 
@@ -453,8 +458,12 @@
             });
 
             confirmBtn.addEventListener('click', async function () {
+                if (confirmBtn.disabled) return;
+                // Hanya dokumen berstatus processed yang dikirim — yang sudah
+                // terlanjur confirmed (mis. dari tombol per baris) dilewati.
                 const ids = Array.from(resultList.querySelectorAll('.row-check:checked'))
-                    .map(c => c.closest('li[data-id]').dataset.id);
+                    .map(c => c.closest('li[data-id]').dataset.id)
+                    .filter(id => { const d = findDoc(id); return d && d.status === 'processed'; });
                 if (ids.length === 0) return;
                 if (!confirm('Konfirmasi ' + ids.length + ' dokumen terpilih?')) return;
 
