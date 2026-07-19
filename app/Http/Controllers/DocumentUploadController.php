@@ -89,29 +89,11 @@ class DocumentUploadController extends Controller
         if ($request->wantsJson()) {
             return response()->json([
                 'batch_id' => $batchId,
-                'batch_url' => route('documents.batch', $batchId),
                 'documents' => collect($created)->map(fn (Document $d) => $this->docPayload($d))->values(),
             ]);
         }
 
-        return redirect()->route('documents.batch', $batchId);
-    }
-
-    // Status batch dalam JSON — dipakai halaman upload untuk melanjutkan
-    // proses OCR yang tertinggal (mis. user sempat menutup halaman).
-    public function batchStatus(string $batchId)
-    {
-        $documents = Document::where('batch_id', $batchId)->orderBy('id')->get();
-
-        if ($documents->isEmpty()) {
-            return response()->json(['message' => 'Folder tidak ditemukan.'], 404);
-        }
-
-        return response()->json([
-            'batch_id' => $batchId,
-            'batch_url' => route('documents.batch', $batchId),
-            'documents' => $documents->map(fn (Document $d) => $this->docPayload($d))->values(),
-        ]);
+        return redirect()->route('documents.upload');
     }
 
     // Bentuk JSON standar 1 dokumen untuk halaman upload (progress + hasil).
@@ -275,58 +257,6 @@ public function confirm(Request $request, Document $document, \App\Services\Docu
         ->route('documents.review', $document)
         ->with($error ? 'error' : 'success',
                $error ?: 'Dokumen berhasil dikonfirmasi dan dipindahkan ke folder output.');
-}
-
-public function batchResult(string $batchId)
-{
-    $documents = \App\Models\Document::where('batch_id', $batchId)
-        ->orderBy('id')
-        ->get();
-
-    if ($documents->isEmpty()) {
-        return redirect()->route('documents.upload')
-            ->with('error', 'Folder tidak ditemukan.');
-    }
-
-    // Peringatan duplikat per dokumen: [id => [nama file kembarannya, ...]]
-    $duplicates = $documents->mapWithKeys(fn (Document $d) => [
-        $d->id => $this->duplicateNames($d),
-    ])->filter(fn ($names) => count($names) > 0);
-
-    return view('documents.batch-result', compact('documents', 'batchId', 'duplicates'));
-}
-
-public function confirmAll(string $batchId, \App\Services\DocumentConfirmer $confirmer)
-{
-    $documents = \App\Models\Document::where('batch_id', $batchId)
-        ->where('status', 'processed')
-        ->get();
-
-    if ($documents->isEmpty()) {
-        return redirect()->route('documents.batch', $batchId)
-            ->with('error', 'Tidak ada dokumen yang siap dikonfirmasi.');
-    }
-
-    $berhasil = 0;
-    $gagal = 0;
-
-    foreach ($documents as $document) {
-        try {
-            $confirmer->confirm($document) ? $berhasil++ : $gagal++;
-        } catch (\Throwable $e) {
-            $document->update([
-                'status' => 'error',
-                'error_message' => $e->getMessage(),
-            ]);
-            $gagal++;
-        }
-    }
-
-    $pesan = "Konfirmasi selesai: {$berhasil} berhasil";
-    if ($gagal > 0) $pesan .= ", {$gagal} gagal";
-
-    return redirect()->route('documents.batch', $batchId)
-        ->with('success', $pesan);
 }
 
 // Halaman pemilihan batch (folder arsip) sebelum download ZIP.

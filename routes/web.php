@@ -38,9 +38,6 @@ Route::middleware('auth')->group(function () {
     Route::post('/dokumen/{document}/process', [DocumentUploadController::class, 'processOne'])
         ->name('documents.process');
 
-    Route::get('/upload/batch/{batchId}/status', [DocumentUploadController::class, 'batchStatus'])
-        ->name('documents.batch.status');
-
     Route::get('/dokumen/{document}/review', [DocumentUploadController::class, 'review'])
         ->name('documents.review');
 
@@ -52,12 +49,6 @@ Route::middleware('auth')->group(function () {
 
     Route::post('/dokumen/confirm-bulk', [DocumentUploadController::class, 'confirmBulk'])
         ->name('documents.confirm-bulk');
-
-    Route::get('/upload/batch/{batchId}', [DocumentUploadController::class, 'batchResult'])
-        ->name('documents.batch');
-
-    Route::post('/upload/batch/{batchId}/confirm-all', [DocumentUploadController::class, 'confirmAll'])
-        ->name('documents.batch.confirm-all');
 
     Route::get('/outputs/download', [DocumentUploadController::class, 'downloadIndex'])
         ->name('outputs.download');
