@@ -83,6 +83,10 @@ if [ "${DB_CONNECTION:-sqlite}" = "sqlite" ]; then\n\
   touch /var/www/database/database.sqlite\n\
   chmod 666 /var/www/database/database.sqlite\n\
 fi\n\
+echo "=== Fixing volume permissions (storage/app) ===" >&2\n\
+mkdir -p /var/www/storage/app/uploads/originals /var/www/storage/app/public\n\
+chown -R www-data:www-data /var/www/storage/app || true\n\
+chmod -R 775 /var/www/storage/app || true\n\
 echo "=== Running config:clear ===" >&2\n\
 php artisan config:clear\n\
 echo "=== Running migrations (timeout 60s) ===" >&2\n\
