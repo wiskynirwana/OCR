@@ -5,8 +5,7 @@ namespace App\Services;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 
-// Kelola kode verifikasi 6 digit (reset password & verifikasi email).
-// Kode disimpan di cache 10 menit, di-hash supaya tidak bisa dibaca dari DB.
+// Kode verifikasi 6 digit, disimpan di cache 10 menit dalam bentuk hash.
 class VerificationCodeService
 {
     private const TTL_MINUTES = 10;
@@ -30,10 +29,10 @@ class VerificationCodeService
         $entry = Cache::get($key);
 
         if (!$entry) {
-            return false; // kadaluarsa / tidak pernah diminta
+            return false;
         }
 
-        // Batasi percobaan supaya tidak bisa brute-force 6 digit
+        // batasi percobaan biar 6 digit gak bisa di-brute-force
         if ($entry['attempts'] >= self::MAX_ATTEMPTS) {
             Cache::forget($key);
             return false;

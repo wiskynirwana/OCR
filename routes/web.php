@@ -7,7 +7,6 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DocumentUploadController;
 
 
-// Root: arahkan ke dashboard bila sudah login, selain itu ke halaman login
 Route::get('/', function () {
     return redirect()->route(Auth::check() ? 'dashboard' : 'login');
 });
@@ -23,7 +22,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/documents/bulk-destroy', [DocumentController::class, 'bulkDestroy'])
         ->name('documents.bulk-destroy');
     Route::resource('documents', DocumentController::class)
-        ->only(['index','show', 'destroy']);
+        ->only(['index', 'destroy']);
 
     Route::middleware(['auth'])->group(function () {
     Route::get('/upload-dokumen', [DocumentUploadController::class, 'create'])
@@ -63,14 +62,5 @@ Route::get('/auth/google', [App\Http\Controllers\Auth\GoogleController::class, '
     ->name('auth.google');
 
 Route::get('/auth/google/callback', [App\Http\Controllers\Auth\GoogleController::class, 'callback']);
-
-Route::get('/debug-oauth', function () {
-    return [
-        'app_url' => config('app.url'),
-        'google_redirect' => config('services.google.redirect'),
-        'google_client_id' => config('services.google.client_id'),
-        'google_secret' => config('services.google.client_secret') ? 'SET' : 'NOT SET',
-    ];
-});
 
 require __DIR__.'/auth.php';

@@ -1,16 +1,5 @@
-{{--
-    Preview pane (slide-over dari kanan) untuk menampilkan file PDF inline.
-    Include SEKALI per halaman: <x-pdf-preview-panel />
-
-    Pemicu preview: tombol/elemen apa pun dengan class "js-preview" dan
-    atribut data-url (URL file) + data-title (judul). Contoh:
-
-        <button type="button" class="js-preview"
-                data-url="{{ route('documents.file', $doc) }}"
-                data-title="{{ $doc->original_filename }}">Lihat</button>
-
-    Atau panggil langsung dari JS: openPdfPreview(url, title)
---}}
+{{-- Panel preview PDF (slide dari kanan). Include sekali per halaman.
+     Pemicu: elemen .js-preview dengan data-url + data-title, atau openPdfPreview(url, title). --}}
 <div id="pdf-preview-overlay" class="fixed inset-0 z-50 hidden" aria-hidden="true">
     <div class="absolute inset-0 bg-ink/40 backdrop-blur-[1px]" onclick="closePdfPreview()"></div>
 
@@ -51,7 +40,6 @@
         document.body.style.overflow = '';
     }
 
-    // Delegasi: semua elemen .js-preview memicu preview.
     document.addEventListener('click', function (e) {
         var btn = e.target.closest('.js-preview');
         if (!btn) return;

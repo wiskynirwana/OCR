@@ -14,7 +14,6 @@
 
     <div class="w-full max-w-sm px-4">
 
-        {{-- Judul --}}
         <div class="text-center mb-8">
             <img src="{{ asset('images/logo a.png') }}" alt="Logo" class="w-12 h-12 object-contain mx-auto mb-4">
             <h1 class="text-lg font-semibold text-ink">Sistem Rename Otomatis Arsip Digital</h1>
@@ -37,7 +36,6 @@
                 </div>
             @endif
 
-            {{-- Google --}}
             <a href="{{ route('auth.google') }}"
                 class="flex items-center justify-center gap-2.5 w-full py-2.5 rounded-xl text-sm font-medium text-ink border border-line hover:bg-paper transition">
                 <svg class="w-4 h-4" viewBox="0 0 24 24">

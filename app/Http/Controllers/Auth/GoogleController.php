@@ -12,9 +12,7 @@ use Laravel\Socialite\Facades\Socialite;
 
 class GoogleController extends Controller
 {
-    // Redirect user ke halaman consent Google.
-    // prompt=select_account memaksa Google menampilkan pemilih akun,
-    // supaya tidak otomatis memakai akun yang terakhir login.
+    // prompt=select_account biar Google gak otomatis pakai akun terakhir login
     public function redirect()
     {
         return Socialite::driver('google')
@@ -22,10 +20,9 @@ class GoogleController extends Controller
             ->redirect();
     }
 
-    // Callback setelah user pilih akun Google
     public function callback()
     {
-        // Google mengirim ?error= bila user membatalkan atau ditolak
+        // Google kirim ?error= kalau user batal atau ditolak
         // (mis. consent screen masih "Testing" & akun bukan test user)
         if (request()->has('error')) {
             Log::warning('Google OAuth ditolak', ['error' => request('error')]);
@@ -37,7 +34,6 @@ class GoogleController extends Controller
         try {
             $googleUser = Socialite::driver('google')->user();
         } catch (\Throwable $e) {
-            // Log pesan asli supaya penyebabnya bisa dilihat di storage/logs
             Log::error('Google OAuth callback gagal', [
                 'message' => $e->getMessage(),
                 'class'   => get_class($e),
@@ -47,8 +43,7 @@ class GoogleController extends Controller
                 ->with('error', 'Login Google gagal. Silakan coba lagi.');
         }
 
-        // Cari akun berdasarkan email; buat baru bila belum terdaftar
-        // (registrasi via Google). Password diisi acak karena kolomnya wajib.
+        // buat akun baru kalau belum terdaftar; password diisi acak karena kolomnya wajib
         $user = User::firstOrNew(['email' => $googleUser->getEmail()]);
 
         if (!$user->exists) {
@@ -57,8 +52,7 @@ class GoogleController extends Controller
             $user->email_verified_at = now();
         }
 
-        // Simpan/update google_id. Email dari Google sudah terverifikasi,
-        // jadi tandai verified juga untuk akun lama yang belum verifikasi
+        // email dari Google sudah terverifikasi, tandai verified juga buat akun lama
         $user->google_id = $googleUser->getId();
         if (!$user->email_verified_at) {
             $user->email_verified_at = now();

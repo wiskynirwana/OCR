@@ -30,15 +30,13 @@ class Document extends Model
 
     protected static function booted(): void
     {
-        // Isi otomatis pemilik dokumen saat dibuat lewat request web.
         static::creating(function (Document $document) {
             if (empty($document->user_id) && Auth::check()) {
                 $document->user_id = Auth::id();
             }
         });
 
-        // Global scope: setiap query dokumen otomatis dibatasi ke user
-        // yang sedang login, sehingga tiap akun hanya melihat miliknya.
+        // global scope: semua query otomatis dibatasi ke user login, jadi tiap akun cuma lihat miliknya
         static::addGlobalScope('owner', function (Builder $builder) {
             if (Auth::check()) {
                 $builder->where('documents.user_id', Auth::id());
@@ -51,11 +49,7 @@ class Document extends Model
         return $this->belongsTo(User::class);
     }
 
-    /**
-     * Nama folder arsip untuk dokumen ini — sama dengan struktur folder
-     * pada output ZIP (per jenis + status + tahun). Dipakai untuk
-     * mengelompokkan Riwayat Dokumen dan menentukan folder output.
-     */
+    // nama folder arsip, sama dengan struktur folder di output ZIP
     public function archiveFolder(): string
     {
         $data = $this->extracted ?? [];
@@ -66,9 +60,7 @@ class Document extends Model
             : ($this->created_at?->format('Y') ?? date('Y'));
 
         if ($this->doc_type === 'spk') {
-            // Normalisasi kode & status: buang spasi/karakter non-alfanumerik
-            // supaya "SPK 1" dan "SPK1" dianggap sama — dokumen dengan jenis
-            // & tahun yang sama tidak terpecah ke folder yang berbeda.
+            // normalisasi biar "SPK 1" dan "SPK1" gak terpecah jadi folder beda
             $kode = preg_replace('/[^A-Z0-9]/', '', strtoupper($data['kode'] ?? 'SPK'));
             if ($kode === '') {
                 $kode = 'SPK';

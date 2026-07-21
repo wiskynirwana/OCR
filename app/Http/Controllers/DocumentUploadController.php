@@ -9,21 +9,14 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use ZipArchive;
 
-
-
 class DocumentUploadController extends Controller
 {
     public function create()
     {
-        // Dokumen yang keburu berstatus 'processing' saat halaman mati
-        // (sleep/refresh di tengah OCR) tidak akan pernah selesai sendiri —
-        // kembalikan ke 'pending' supaya otomatis diproses ulang.
+        // yang keburu 'processing' pas halaman mati gak bakal selesai sendiri, balikin ke pending
         Document::where('status', 'processing')->update(['status' => 'pending']);
 
-        // Semua dokumen yang belum dikonfirmasi = "pekerjaan berjalan".
-        // Dirender ulang di halaman upload agar hasil OCR tidak hilang
-        // walau halaman di-refresh / laptop sleep. Baru hilang dari sini
-        // setelah dikonfirmasi (masuk Riwayat) atau dihapus.
+        // dokumen yang belum dikonfirmasi ditampilkan lagi biar hasil OCR gak hilang pas refresh
         $unfinished = Document::whereIn('status', ['pending', 'processed', 'error'])
             ->orderBy('id')
             ->get()
@@ -36,12 +29,9 @@ class DocumentUploadController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            // docs[] = bisa upload banyak PDF, maksimal 500 file sekaligus.
             'docs' => ['required', 'array', 'max:500'],
-            // max dalam KB: 20480 KB = 20 MB per file.
+            // 20480 KB = 20 MB per file
             'docs.*' => ['required', 'file', 'mimes:pdf', 'max:20480'],
-
-            // Ini pilihan dari UI, bukan tipe internal OCR.
             'doc_variant' => ['nullable', 'in:spk_kontrak,spk_tetap'],
         ], [
             'docs.max' => 'Maksimal 500 file per upload.',
@@ -50,10 +40,8 @@ class DocumentUploadController extends Controller
 
         $variant = $request->doc_variant;
 
-        // Mapping pilihan UI ke tipe OCR internal.
-        // SPK KONTRAK / SPK TETAP tetap diproses sebagai "spk",
-        // karena kode SPK dan status KONTRAK/PTY dibaca dari OCR.
-        // Auto Detect (kosong) => null, biarkan pipeline yang mendeteksi.
+        // SPK KONTRAK / SPK TETAP sama-sama diproses sebagai "spk",
+        // status KONTRAK/PTY-nya nanti dibaca dari hasil OCR
         $knownType = match ($variant) {
             'spk_kontrak',
             'spk_tetap' => 'spk',
@@ -63,15 +51,12 @@ class DocumentUploadController extends Controller
 
         $batchId = \Illuminate\Support\Str::uuid()->toString();
 
-        // Simpan file + buat record status 'pending' saja — OCR TIDAK dijalankan
-        // di request ini supaya respons cepat dan user tidak terkunci menunggu.
-        // Proses OCR dijalankan per file via AJAX dari halaman upload
-        // (lihat processOne) sambil menampilkan progress ring persen.
+        // OCR tidak dijalankan di sini biar respons cepat — diproses per file
+        // via AJAX dari halaman upload (processOne)
         $created = [];
 
         foreach ($request->file('docs') as $file) {
-            // Hash isi file — buat mendeteksi file yang sama diupload 2x.
-            // Dihitung sebelum store() supaya path temp-nya masih pasti ada.
+            // hash buat deteksi file sama diupload 2x; dihitung sebelum store()
             $hash = md5_file($file->getRealPath()) ?: null;
 
             $created[] = Document::create([
@@ -84,8 +69,6 @@ class DocumentUploadController extends Controller
             ]);
         }
 
-        // Submit AJAX dari halaman upload → balas JSON berisi daftar dokumen
-        // + URL proses per file, biar progress-nya dijalankan di halaman upload.
         if ($request->wantsJson()) {
             return response()->json([
                 'batch_id' => $batchId,
@@ -115,9 +98,7 @@ class DocumentUploadController extends Controller
         ];
     }
 
-    // Nama file lain (milik user yang sama, dibatasi global scope 'owner')
-    // yang isinya identik / namanya sama dengan dokumen ini — dipakai untuk
-    // menampilkan peringatan duplikat di halaman upload.
+    // nama file lain yang isinya/namanya sama — buat peringatan duplikat di halaman upload
     private function duplicateNames(Document $d): array
     {
         return Document::where('id', '!=', $d->id)
@@ -135,8 +116,6 @@ class DocumentUploadController extends Controller
             ->all();
     }
 
-    // Konfirmasi banyak dokumen sekaligus dari halaman upload (select all /
-    // terpilih). Balas JSON berisi hasil per dokumen.
     public function confirmBulk(Request $request, \App\Services\DocumentConfirmer $confirmer)
     {
         $data = $request->validate([
@@ -144,7 +123,7 @@ class DocumentUploadController extends Controller
             'ids.*' => ['integer'],
         ]);
 
-        // Global scope 'owner' membatasi ke dokumen milik user login.
+        // global scope 'owner' udah batasi ke dokumen milik user login
         $documents = Document::whereIn('id', $data['ids'])
             ->where('status', 'processed')
             ->get();
@@ -163,12 +142,11 @@ class DocumentUploadController extends Controller
         return response()->json(['results' => $results]);
     }
 
-    // Proses OCR 1 dokumen (dipanggil via AJAX dari halaman batch, satu per satu,
-    // supaya progress-nya kelihatan). Return JSON status terbaru dokumen.
+    // OCR 1 dokumen, dipanggil satu-satu via AJAX biar progressnya kelihatan
     public function processOne(Document $document, DocumentProcessor $processor)
     {
         if ($document->status !== 'pending') {
-            // Sudah/sedang diproses (mis. user refresh) — jangan proses dua kali.
+            // udah/sedang diproses (mis. user refresh), jangan dobel
             return response()->json($this->docPayload($document));
         }
 
@@ -188,187 +166,166 @@ class DocumentUploadController extends Controller
         return view('documents.review', compact('document'));
     }
 
-public function updateReview(Request $request, Document $document, FilenameBuilder $filenameBuilder)
-{
-    $type = $document->doc_type;
+    public function updateReview(Request $request, Document $document, FilenameBuilder $filenameBuilder)
+    {
+        $type = $document->doc_type;
 
-    // Ambil data OCR lama.
-    // Ini penting supaya field lain yang gak tampil tidak hilang.
-    $data = $document->extracted ?? [];
+        // ambil data OCR lama biar field yang gak tampil di form gak ikut hilang
+        $data = $document->extracted ?? [];
 
-    if ($type === 'spk') {
-        $validated = $request->validate([
-            'seq' => ['nullable', 'string', 'max:50'],
-            'kode' => ['nullable', 'string', 'max:50'],
-            'status_pegawai' => ['nullable', 'string', 'max:50'],
-            'tanggal' => ['nullable', 'string', 'max:20'],
-            'nama' => ['nullable', 'string', 'max:255'],
+        if ($type === 'spk') {
+            $validated = $request->validate([
+                'seq' => ['nullable', 'string', 'max:50'],
+                'kode' => ['nullable', 'string', 'max:50'],
+                'status_pegawai' => ['nullable', 'string', 'max:50'],
+                'tanggal' => ['nullable', 'string', 'max:20'],
+                'nama' => ['nullable', 'string', 'max:255'],
+            ]);
+
+            $data['seq'] = $validated['seq'] ?? null;
+            // kode dinormalisasi biar folder output gak terpecah ("SPK 1" vs "SPK1")
+            $data['kode'] = preg_replace('/[^A-Z0-9]/', '', strtoupper($validated['kode'] ?? ''));
+            $data['status'] = strtoupper($validated['status_pegawai'] ?? '');
+            $data['tanggal'] = $validated['tanggal'] ?? null;
+            $data['nama'] = strtoupper($validated['nama'] ?? '');
+        }
+
+        $newFilename = $filenameBuilder->build($type, $data);
+
+        $document->update([
+            'extracted' => $data,
+            'new_filename' => $newFilename,
         ]);
 
-        // Label UI:
-        // Nomor Surat -> seq
-        // Jenis -> kode
-        // Status Pegawai -> status
-        $data['seq'] = $validated['seq'] ?? null;
-        // Normalisasi kode (buang spasi/karakter non-alfanumerik) supaya folder
-        // output tidak terpecah untuk dokumen dengan jenis & tahun yang sama.
-        $data['kode'] = preg_replace('/[^A-Z0-9]/', '', strtoupper($validated['kode'] ?? ''));
-        $data['status'] = strtoupper($validated['status_pegawai'] ?? '');
-        $data['tanggal'] = $validated['tanggal'] ?? null;
-        $data['nama'] = strtoupper($validated['nama'] ?? '');
+        return redirect()
+            ->route('documents.review', $document)
+            ->with('success', 'Koreksi berhasil disimpan dan nama file diperbarui.');
     }
 
-    // Generate ulang nama file dari data hasil koreksi.
-    $newFilename = $filenameBuilder->build($type, $data);
+    public function confirm(Request $request, Document $document, \App\Services\DocumentConfirmer $confirmer)
+    {
+        $error = null;
+        if ($document->status !== 'processed') {
+            $error = 'Dokumen belum siap dikonfirmasi.';
+        } elseif (!$document->new_filename) {
+            $error = 'Nama file baru masih kosong.';
+        } elseif (!$document->stored_path || !Storage::exists($document->stored_path)) {
+            $error = 'File asli tidak ditemukan di storage.';
+        }
 
-    $document->update([
-        'extracted' => $data,
-        'new_filename' => $newFilename,
-    ]);
+        if (!$error) {
+            $confirmer->confirm($document);
+        }
 
-    return redirect()
-        ->route('documents.review', $document)
-        ->with('success', 'Koreksi berhasil disimpan dan nama file diperbarui.');
-}
+        if ($request->wantsJson()) {
+            return $error
+                ? response()->json(['message' => $error], 422)
+                : response()->json($this->docPayload($document->fresh()));
+        }
 
-public function confirm(Request $request, Document $document, \App\Services\DocumentConfirmer $confirmer)
-{
-    $error = null;
-    if ($document->status !== 'processed') {
-        $error = 'Dokumen belum siap dikonfirmasi.';
-    } elseif (!$document->new_filename) {
-        $error = 'Nama file baru masih kosong.';
-    } elseif (!$document->stored_path || !Storage::exists($document->stored_path)) {
-        $error = 'File asli tidak ditemukan di storage.';
+        return redirect()
+            ->route('documents.review', $document)
+            ->with($error ? 'error' : 'success',
+                   $error ?: 'Dokumen berhasil dikonfirmasi dan dipindahkan ke folder output.');
     }
 
-    if (!$error) {
-        $confirmer->confirm($document);
+    public function downloadIndex()
+    {
+        $groups = Document::where('status', 'confirmed')
+            ->whereNotNull('stored_path')
+            ->get()
+            ->groupBy(fn (Document $doc) => $doc->archiveFolder())
+            ->sortKeys();
+
+        return view('documents.download', compact('groups'));
     }
 
-    // Dipanggil via AJAX dari halaman upload → balas JSON.
-    if ($request->wantsJson()) {
-        return $error
-            ? response()->json(['message' => $error], 422)
-            : response()->json($this->docPayload($document->fresh()));
+    public function downloadZip(Request $request)
+    {
+        $request->validate([
+            'folders'   => ['nullable', 'array'],
+            'folders.*' => ['string'],
+        ]);
+
+        $documents = Document::where('status', 'confirmed')
+            ->whereNotNull('stored_path')
+            ->get();
+
+        // kalau gak ada folder yang dipilih, unduh semua
+        $selected = $request->input('folders', []);
+        if (!empty($selected)) {
+            $documents = $documents->filter(
+                fn (Document $doc) => in_array($doc->archiveFolder(), $selected, true)
+            );
+        }
+
+        if ($documents->isEmpty()) {
+            return redirect()->back()->with('error', 'Belum ada file output.');
+        }
+
+        \Illuminate\Support\Facades\Storage::makeDirectory('temp/zips');
+
+        // nama ZIP ikut folder yang dipilih; kalau semua pakai timestamp
+        if (count($selected) === 1) {
+            $zipFileName = $selected[0] . '.zip';
+        } elseif (count($selected) > 1) {
+            $joined = implode(' + ', $selected);
+            if (strlen($joined) > 100) {
+                $joined = count($selected) . ' FOLDER - ' . now()->format('Ymd-His');
+            }
+            $zipFileName = $joined . '.zip';
+        } else {
+            $zipFileName = 'OUTPUT-' . now()->format('Ymd-His') . '.zip';
+        }
+
+        // folders[] datang dari input user, jangan dipakai mentah di path
+        $zipFileName = preg_replace('/[\/\\\\:*?"<>|]/', '', $zipFileName);
+        $zipFileName = preg_replace('/\.+(?=zip$)/', '.', trim($zipFileName));
+
+        $zipPath = storage_path('app/temp/zips/' . $zipFileName);
+
+        $zip = new \ZipArchive();
+
+        if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== true) {
+            return redirect()->back()->with('error', 'Gagal membuat file ZIP.');
+        }
+
+        $added = 0;
+
+        foreach ($documents as $document) {
+            if (!\Illuminate\Support\Facades\Storage::exists($document->stored_path)) {
+                continue;
+            }
+
+            $fullPath = \Illuminate\Support\Facades\Storage::path($document->stored_path);
+            // pertahankan struktur folder outputs/<folder>/<file>
+            $relativeName = str_replace('outputs/', '', $document->stored_path);
+            $relativeName = str_replace('\\', '/', $relativeName);
+            $zip->addFile($fullPath, $relativeName);
+            $added++;
+        }
+
+        $zip->close();
+
+        if ($added === 0) {
+            @unlink($zipPath);
+            return redirect()->back()->with('error', 'File output tidak ditemukan di storage.');
+        }
+
+        return response()->download($zipPath, $zipFileName)->deleteFileAfterSend(true);
     }
 
-    return redirect()
-        ->route('documents.review', $document)
-        ->with($error ? 'error' : 'success',
-               $error ?: 'Dokumen berhasil dikonfirmasi dan dipindahkan ke folder output.');
-}
+    public function file(Document $document)
+    {
+        abort_unless(
+            $document->stored_path && Storage::exists($document->stored_path),
+            404
+        );
 
-// Halaman pemilihan batch (folder arsip) sebelum download ZIP.
-// User bisa memilih folder mana saja yang ingin diunduh.
-public function downloadIndex()
-{
-    $groups = Document::where('status', 'confirmed')
-        ->whereNotNull('stored_path')
-        ->get()
-        ->groupBy(fn (Document $doc) => $doc->archiveFolder())
-        ->sortKeys();
-
-    return view('documents.download', compact('groups'));
-}
-
-public function downloadZip(Request $request)
-{
-    $request->validate([
-        'folders'   => ['nullable', 'array'],
-        'folders.*' => ['string'],
-    ]);
-
-    // Ambil hanya dokumen confirmed milik user yang sedang login
-    // (global scope pada model Document sudah membatasi ke Auth::id()).
-    $documents = Document::where('status', 'confirmed')
-        ->whereNotNull('stored_path')
-        ->get();
-
-    // Jika user memilih batch tertentu, filter hanya folder terpilih.
-    // Bila tidak ada yang dipilih, unduh semua folder.
-    $selected = $request->input('folders', []);
-    if (!empty($selected)) {
-        $documents = $documents->filter(
-            fn (Document $doc) => in_array($doc->archiveFolder(), $selected, true)
+        return Storage::response(
+            $document->stored_path,
+            $document->original_filename ?: 'dokumen.pdf',
+            ['Content-Type' => 'application/pdf']
         );
     }
-
-    if ($documents->isEmpty()) {
-        return redirect()->back()->with('error', 'Belum ada file output.');
-    }
-
-    \Illuminate\Support\Facades\Storage::makeDirectory('temp/zips');
-
-    // Nama ZIP mengikuti folder yang dipilih:
-    // - 1 folder  → "SCAN SPK1 KONTRAK 2026.zip"
-    // - >1 folder → gabungan nama, dipotong bila kepanjangan
-    // - semua     → "OUTPUT-<timestamp>.zip"
-    if (count($selected) === 1) {
-        $zipFileName = $selected[0] . '.zip';
-    } elseif (count($selected) > 1) {
-        $joined = implode(' + ', $selected);
-        if (strlen($joined) > 100) {
-            $joined = count($selected) . ' FOLDER - ' . now()->format('Ymd-His');
-        }
-        $zipFileName = $joined . '.zip';
-    } else {
-        $zipFileName = 'OUTPUT-' . now()->format('Ymd-His') . '.zip';
-    }
-
-    // Amankan nama file: buang separator path & karakter ilegal
-    // (folders[] datang dari input user, jangan dipakai mentah di path).
-    $zipFileName = preg_replace('/[\/\\\\:*?"<>|]/', '', $zipFileName);
-    $zipFileName = preg_replace('/\.+(?=zip$)/', '.', trim($zipFileName));
-
-    $zipPath = storage_path('app/temp/zips/' . $zipFileName);
-
-    $zip = new \ZipArchive();
-
-    if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== true) {
-        return redirect()->back()->with('error', 'Gagal membuat file ZIP.');
-    }
-
-    $added = 0;
-
-    foreach ($documents as $document) {
-        if (!\Illuminate\Support\Facades\Storage::exists($document->stored_path)) {
-            continue;
-        }
-
-        $fullPath = \Illuminate\Support\Facades\Storage::path($document->stored_path);
-        // Pertahankan struktur folder outputs/<folder>/<file>
-        $relativeName = str_replace('outputs/', '', $document->stored_path);
-        $relativeName = str_replace('\\', '/', $relativeName);
-        $zip->addFile($fullPath, $relativeName);
-        $added++;
-    }
-
-    $zip->close();
-
-    if ($added === 0) {
-        @unlink($zipPath);
-        return redirect()->back()->with('error', 'File output tidak ditemukan di storage.');
-    }
-
-    return response()->download($zipPath, $zipFileName)->deleteFileAfterSend(true);
-}
-
-// Stream file PDF (asli sebelum konfirmasi / hasil rename sesudah konfirmasi)
-// secara inline untuk ditampilkan di preview pane. Global scope 'owner'
-// memastikan user hanya bisa membuka dokumen miliknya sendiri.
-public function file(Document $document)
-{
-    abort_unless(
-        $document->stored_path && Storage::exists($document->stored_path),
-        404
-    );
-
-    return Storage::response(
-        $document->stored_path,
-        $document->original_filename ?: 'dokumen.pdf',
-        ['Content-Type' => 'application/pdf']
-    );
-}
-
 }

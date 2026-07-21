@@ -37,7 +37,7 @@
                         <div x-data="{ open: false }">
                             <div class="flex items-center justify-between gap-3 px-4 py-3 hover:bg-paper/50 transition-colors">
                                 <span class="inline-flex items-center gap-2.5">
-                                    {{-- Checkbox di luar tombol toggle supaya klik centang tidak ikut buka/tutup --}}
+                                    {{-- checkbox di luar tombol toggle biar klik centang tidak ikut buka/tutup --}}
                                     <input type="checkbox" name="folders[]" value="{{ $folder }}"
                                            class="folder-check rounded border-line text-pine focus:ring-pine/30">
                                     <button type="button" @click="open = !open"
@@ -52,7 +52,6 @@
                                 <span class="text-xs text-ink-faint">{{ $docs->count() }} file</span>
                             </div>
 
-                            {{-- Isi folder: daftar file + tombol preview --}}
                             <ul x-show="open" x-cloak class="border-t border-line bg-paper/30 divide-y divide-line/60">
                                 @foreach ($docs as $doc)
                                     <li class="flex items-center justify-between gap-3 ps-11 pe-4 py-2">
@@ -91,7 +90,6 @@
                 const checked = checks.filter(c => c.checked).length;
                 selectAll.checked = checked > 0 && checked === checks.length;
                 selectAll.indeterminate = checked > 0 && checked < checks.length;
-                // Tombol download baru aktif setelah minimal 1 folder dipilih.
                 if (downloadBtn) {
                     downloadBtn.disabled = checked === 0;
                     downloadBtn.classList.toggle('opacity-50', checked === 0);

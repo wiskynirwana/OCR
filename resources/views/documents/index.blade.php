@@ -111,7 +111,6 @@
             const bulkBtn   = document.getElementById('bulk-delete-btn');
             const countEl   = document.getElementById('selected-count');
 
-            // Perbarui state satu checkbox "pilih batch" berdasarkan baris di dalamnya.
             function refreshGroup(group) {
                 const boxes   = Array.from(group.querySelectorAll('.row-check'));
                 const batch   = group.querySelector('.batch-check');
@@ -132,7 +131,6 @@
                 groups.forEach(refreshGroup);
             }
 
-            // Pilih semua (global)
             if (selectAll) {
                 selectAll.addEventListener('change', function () {
                     rowChecks.forEach(c => { c.checked = selectAll.checked; });
@@ -140,7 +138,6 @@
                 });
             }
 
-            // Pilih semua dalam 1 batch
             groups.forEach(group => {
                 const batch = group.querySelector('.batch-check');
                 if (!batch) return;

@@ -2,13 +2,11 @@
     <div class="w-full px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16">
             <div class="flex items-center gap-8">
-                {{-- Logo --}}
                 <a href="{{ route('dashboard') }}" class="flex items-center gap-2.5">
                     <img src="{{ asset('images/logo a.png') }}" alt="As-Syifa" class="block h-8 w-auto object-contain">
                     <span class="text-sm font-semibold tracking-tight text-ink">As-Syifa</span>
                 </a>
 
-                {{-- Navigasi --}}
                 <div class="hidden sm:flex sm:items-center sm:gap-7 h-full">
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">Dashboard</x-nav-link>
                     <x-nav-link :href="route('documents.index')" :active="request()->routeIs('documents.index')">Riwayat</x-nav-link>
@@ -17,7 +15,6 @@
                 </div>
             </div>
 
-            {{-- User --}}
             <div class="hidden sm:flex sm:items-center">
                 <x-dropdown align="right" width="48">
                     <x-slot name="trigger">
@@ -45,7 +42,6 @@
                 </x-dropdown>
             </div>
 
-            {{-- Hamburger --}}
             <div class="-me-2 flex items-center sm:hidden">
                 <button @click="open = ! open" class="inline-flex items-center justify-center p-2 rounded-lg text-ink-faint hover:text-ink hover:bg-paper focus:outline-none transition">
                     <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">

@@ -7,9 +7,7 @@ use Illuminate\Support\Facades\Storage;
 
 class DocumentConfirmer
 {
-    // Pindahkan file asli ke folder output final (rename) + tandai confirmed.
-    // Dipakai dari halaman review (per file), batch result, dan riwayat
-    // (konfirmasi semua / per batch). Return false bila dokumen belum siap.
+    // Rename + pindah file ke folder output final. Return false kalau dokumen belum siap.
     public function confirm(Document $document): bool
     {
         if ($document->status !== 'processed') {

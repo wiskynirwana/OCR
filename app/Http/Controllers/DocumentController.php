@@ -8,10 +8,7 @@ use Illuminate\Support\Facades\Storage;
 class DocumentController extends Controller
 {
 
-    // READ — tampilkan daftar dokumen, dikelompokkan per jenis + tahun
-    // (mengikuti struktur folder output ZIP), plus total semua file.
-    // Hanya dokumen yang SUDAH dikonfirmasi — yang belum konfirmasi masih
-    // "berjalan" di alur upload (review & konfirmasi di halaman hasil OCR).
+    // cuma yang sudah confirmed — yang belum masih "berjalan" di alur upload
     public function index()
     {
         $documents = Document::where('status', 'confirmed')->latest()->get();
@@ -25,13 +22,6 @@ class DocumentController extends Controller
         return view('documents.index', compact('groups', 'total'));
     }
 
-    // READ — tampilkan detail 1 dokumen
-    public function show(Document $document)
-    {
-        return view('documents.show', compact('document'));
-    }
-
-    // DELETE — hapus dokumen (record DB + file PDF fisiknya di storage)
     public function destroy(Request $request, Document $document)
     {
         if ($document->stored_path && Storage::exists($document->stored_path)) {
@@ -40,7 +30,6 @@ class DocumentController extends Controller
 
         $document->delete();
 
-        // Dipanggil via AJAX dari halaman upload → balas JSON.
         if ($request->wantsJson()) {
             return response()->json(['ok' => true]);
         }
@@ -48,7 +37,6 @@ class DocumentController extends Controller
         return redirect()->route('documents.index')->with('ok', 'Dokumen dihapus.');
     }
 
-    // DELETE — hapus banyak dokumen sekaligus (select all)
     public function bulkDestroy(Request $request)
     {
         $data = $request->validate([
@@ -56,8 +44,7 @@ class DocumentController extends Controller
             'ids.*' => 'integer',
         ]);
 
-        // Global scope 'owner' memastikan hanya dokumen milik user yang terhapus.
-        // Ambil dulu record-nya supaya file fisiknya ikut terhapus.
+        // ambil record-nya dulu biar file fisiknya ikut kehapus
         $documents = Document::whereIn('id', $data['ids'])->get();
 
         foreach ($documents as $document) {

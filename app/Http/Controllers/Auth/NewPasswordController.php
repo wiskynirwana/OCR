@@ -16,9 +16,6 @@ use Illuminate\View\View;
 
 class NewPasswordController extends Controller
 {
-    /**
-     * Tampilkan form reset: kode 6 digit + password baru.
-     */
     public function create(Request $request): View
     {
         return view('auth.reset-password', [
@@ -26,11 +23,7 @@ class NewPasswordController extends Controller
         ]);
     }
 
-    /**
-     * Verifikasi kode lalu ganti password.
-     *
-     * @throws ValidationException
-     */
+    // verifikasi kode 6 digit lalu ganti password
     public function store(Request $request, VerificationCodeService $codes): RedirectResponse
     {
         $request->validate([

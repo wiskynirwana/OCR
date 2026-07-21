@@ -13,19 +13,12 @@ use Illuminate\View\View;
 
 class PasswordResetLinkController extends Controller
 {
-    /**
-     * Tampilkan form lupa password (minta email).
-     */
     public function create(): View
     {
         return view('auth.forgot-password');
     }
 
-    /**
-     * Kirim kode reset 6 digit ke email user.
-     *
-     * @throws ValidationException
-     */
+    // kirim kode reset 6 digit ke email user
     public function store(Request $request, VerificationCodeService $codes): RedirectResponse
     {
         $request->validate([
@@ -37,8 +30,7 @@ class PasswordResetLinkController extends Controller
 
         $user = User::where('email', $request->email)->first();
 
-        // Kirim kode hanya bila akunnya ada; pesan sukses tetap sama
-        // supaya orang tidak bisa menebak email mana yang terdaftar
+        // pesan sukses tetap sama walau akun gak ada, biar email terdaftar gak bisa ditebak
         if ($user) {
             $code = $codes->generate('password_reset', $user->email);
             $user->notify(new ResetPasswordCode($code));

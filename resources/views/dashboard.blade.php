@@ -2,7 +2,6 @@
     <div class="min-h-screen py-8 px-4 bg-paper">
         <div class="max-w-5xl mx-auto">
 
-            {{-- Header --}}
             <div class="mb-8">
                 <h1 class="text-2xl font-semibold tracking-tight text-ink">
                     Selamat datang, {{ auth()->user()->name }}
@@ -15,7 +14,6 @@
             {{-- Kartu Statistik --}}
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
 
-                {{-- Total Dokumen --}}
                 <div class="card p-5">
                     <div class="w-10 h-10 rounded-xl flex items-center justify-center mb-3 bg-pine-soft text-pine">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -26,7 +24,6 @@
                     <p class="text-sm mt-0.5 text-ink-soft">Total Dokumen</p>
                 </div>
 
-                {{-- Menunggu Review --}}
                 <div class="card p-5">
                     <div class="w-10 h-10 rounded-xl flex items-center justify-center mb-3 bg-clay-soft text-clay-dark">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -37,7 +34,6 @@
                     <p class="text-sm mt-0.5 text-ink-soft">Menunggu Review</p>
                 </div>
 
-                {{-- Selesai --}}
                 <div class="card p-5">
                     <div class="w-10 h-10 rounded-xl flex items-center justify-center mb-3 bg-pine-soft text-pine">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -48,7 +44,6 @@
                     <p class="text-sm mt-0.5 text-ink-soft">Selesai</p>
                 </div>
 
-                {{-- Gagal --}}
                 <div class="card p-5">
                     <div class="w-10 h-10 rounded-xl flex items-center justify-center mb-3 bg-danger-soft text-danger">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -61,10 +56,8 @@
 
             </div>
 
-            {{-- Dua kolom: Info sistem + Aksi cepat --}}
             <div class="grid md:grid-cols-3 gap-6 mb-8">
 
-                {{-- Info Sistem --}}
                 <div class="md:col-span-2 card p-6">
                     <h2 class="font-semibold text-base mb-3 text-ink">Tentang Sistem Ini</h2>
                     <p class="text-sm leading-relaxed mb-3 text-ink-soft">
@@ -82,7 +75,6 @@
                     </p>
                 </div>
 
-                {{-- Aksi Cepat --}}
                 <div class="card p-6">
                     <h2 class="font-semibold text-base mb-4 text-ink">Upload</h2>
 
@@ -96,7 +88,6 @@
 
             </div>
 
-            {{-- Aktivitas Terbaru --}}
             @if ($recentDocs->isNotEmpty())
             <div class="card overflow-hidden">
                 <div class="px-6 py-4 border-b border-line">

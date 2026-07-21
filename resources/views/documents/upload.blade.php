@@ -20,7 +20,6 @@
                 </div>
             @endif
 
-            {{-- Kartu form upload --}}
             <div id="upload-card" class="card p-6">
                 <form id="upload-form" action="{{ route('documents.upload.store') }}" method="POST" enctype="multipart/form-data">
                     @csrf
@@ -38,7 +37,6 @@
                     <div class="mb-5">
                         <label class="field-label">File PDF</label>
 
-                        {{-- Dropzone: klik atau seret file ke sini --}}
                         <div id="dropzone"
                              class="group flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-line bg-paper/40 px-6 py-8 text-center cursor-pointer transition hover:border-pine/50 hover:bg-pine-soft/40">
                             <svg class="w-8 h-8 text-ink-faint group-hover:text-pine transition" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24">
@@ -50,11 +48,9 @@
                             <div class="text-xs text-ink-faint">PDF &middot; maks 500 file &middot; maks 20 MB tiap file</div>
                         </div>
 
-                        {{-- Input asli (tersembunyi). files-nya = sumber data untuk submit. --}}
                         <input id="file-input" type="file" name="docs[]" multiple accept="application/pdf" class="hidden">
                     </div>
 
-                    {{-- Daftar file terpilih + preview --}}
                     <div id="file-list-wrap" class="mb-5 hidden">
                         <div class="flex items-center justify-between mb-2">
                             <span class="text-sm font-medium text-ink">File terpilih (<span id="file-count">0</span> / 500)</span>
@@ -69,7 +65,6 @@
                 </form>
             </div>
 
-            {{-- ===== Hasil OCR: muncul di bawah form saat proses jalan & sesudahnya ===== --}}
             <div id="result-card" class="card overflow-hidden mt-6 hidden">
                 <div class="flex flex-wrap items-center justify-between gap-3 px-5 py-4 border-b border-line bg-paper/60">
                     <div>
@@ -107,7 +102,6 @@
             const clearAll   = document.getElementById('clear-all');
             const csrf       = document.querySelector('meta[name="csrf-token"]').content;
 
-            // Elemen hasil OCR
             const resultCard   = document.getElementById('result-card');
             const resultList   = document.getElementById('result-list');
             const summaryEl    = document.getElementById('result-summary');
@@ -118,14 +112,12 @@
 
             const BATCH_KEY = 'ocr_active_batch'; // legacy; dibersihkan saja
 
-            // Pekerjaan berjalan dari server (belum dikonfirmasi) — sumber
-            // kebenaran, tahan refresh/sleep. Dirender saat halaman dibuka.
+            // pekerjaan dari server yang belum dikonfirmasi — tahan refresh/sleep
             const UNFINISHED = @json($unfinished);
 
-            // Kunci anti spam-click: sekali proses jalan, submit diabaikan.
             let busy = false;
 
-            // Akumulator: sumber kebenaran untuk file yang akan di-submit.
+            // store = sumber kebenaran file yang akan di-submit
             let store = [];
             const MAX_FILES = 500;
 
@@ -137,7 +129,6 @@
                 return (bytes / 1048576).toFixed(1) + ' MB';
             }
 
-            // Sinkronkan store -> input.files (yang benar-benar dikirim ke server).
             function syncInput() {
                 const dt = new DataTransfer();
                 store.forEach(f => dt.items.add(f));
@@ -151,7 +142,7 @@
                 Array.from(fileList).forEach(f => {
                     const isPdf = f.type === 'application/pdf' || /\.pdf$/i.test(f.name);
                     if (!isPdf) return;
-                    if (existing.has(keyOf(f))) { dobel.push(f.name); return; }   // duplikat: jangan ditambah 2x
+                    if (existing.has(keyOf(f))) { dobel.push(f.name); return; }
                     if (store.length >= MAX_FILES) { penuh = true; return; }
                     existing.add(keyOf(f));
                     store.push(f);
@@ -203,8 +194,6 @@
                 return d.innerHTML;
             }
 
-            // ================= Hasil OCR (list per file di bawah form) =================
-
             const SPINNER =
                 '<svg class="w-5 h-5 animate-spin text-pine" fill="none" viewBox="0 0 24 24">' +
                 '<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>' +
@@ -219,7 +208,6 @@
                 '<svg class="w-5 h-5 text-danger" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">' +
                 '<path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
 
-            // state per dokumen: {id, name, status, ...payload}
             let docsState = [];
 
             function rowEl(id) { return resultList.querySelector('li[data-id="' + id + '"]'); }
@@ -234,7 +222,6 @@
                         '<span class="row-icon flex-shrink-0">' + ICON_WAIT + '</span>' +
                         '<div class="min-w-0 flex-1">' +
                             '<div class="truncate text-sm text-ink" title="' + escapeHtml(doc.name) + '">' + escapeHtml(doc.name) + '</div>' +
-                            {{-- Nama file hasil OCR di baris sendiri + break-all supaya kebaca penuh, tidak kepotong --}}
                             '<div class="mt-1 flex items-start gap-1.5">' +
                                 '<svg class="w-3.5 h-3.5 mt-0.5 flex-shrink-0 text-ink-faint" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>' +
                                 '<span class="row-newname font-mono text-xs text-ink break-all">menunggu&hellip;</span>' +
@@ -259,8 +246,7 @@
 
                 actions.innerHTML = '';
                 chkWrap.classList.add('hidden');
-                // Checkbox baris yang tidak lagi bisa dikonfirmasi ikut di-uncheck,
-                // supaya tidak terhitung "terpilih" secara tersembunyi.
+                // uncheck baris yang sudah tidak bisa dikonfirmasi biar tidak kehitung terpilih
                 const chk = row.querySelector('.row-check');
                 if (chk && doc.status !== 'processed') chk.checked = false;
                 dupEl.classList.add('hidden');
@@ -303,7 +289,6 @@
                         '<button type="button" data-row-act="delete" class="text-xs font-medium text-danger hover:underline">Hapus</button>';
                 }
 
-                // Peringatan duplikat: file dengan isi yang sama sudah pernah diupload.
                 if (doc.duplicate_of && doc.duplicate_of.length > 0) {
                     dupEl.classList.remove('hidden');
                     dupEl.innerHTML =
@@ -334,14 +319,11 @@
 
             function refreshBulkUi() {
                 refreshSummary();
-                // Hitung hanya checkbox yang benar-benar tampil (baris berstatus
-                // processed) — baris confirmed checkbox-nya disembunyikan.
+                // hitung hanya checkbox yang tampil — baris confirmed checkbox-nya disembunyikan
                 const checks  = Array.from(resultList.querySelectorAll('.row-check'))
                     .filter(c => !c.closest('.row-check-wrap').classList.contains('hidden'));
                 const checked = checks.filter(c => c.checked);
 
-                // Kontrol bulk tampil selama kartu hasil ada isinya; tapi kalau
-                // sudah tidak ada yang bisa dikonfirmasi, keduanya dimatikan.
                 if (docsState.length > 0) {
                     selAllWrap.classList.remove('hidden');
                     selAllWrap.classList.add('inline-flex');
@@ -365,11 +347,9 @@
 
             function findDoc(id) { return docsState.find(d => String(d.id) === String(id)); }
 
-            // ================= Antrian proses OCR (per file) =================
-
-            // Render daftar dokumen ke kartu hasil, lalu proses yang masih pending.
+            // antrian proses OCR
             async function runQueue(docs) {
-                // Gabungkan dengan yang sudah tampil (upload susulan tidak menimpa).
+                // gabung dengan yang sudah tampil, upload susulan tidak menimpa
                 docs.forEach(d => {
                     if (!findDoc(d.id)) {
                         docsState.push(d);
@@ -404,15 +384,13 @@
                 refreshSummary();
             }
 
-            // Peringatkan kalau mau menutup halaman saat OCR masih jalan.
             window.addEventListener('beforeunload', function (e) {
                 if (!busy) return;
                 e.preventDefault();
                 e.returnValue = '';
             });
 
-            // ================= Aksi per baris & bulk =================
-
+            // aksi per baris & bulk
             resultList.addEventListener('click', async function (e) {
                 const btn = e.target.closest('button[data-row-act]');
                 if (!btn) return;
@@ -421,7 +399,6 @@
                 if (!doc) return;
 
                 if (btn.dataset.rowAct === 'confirm') {
-                    // Jangan proses dua kali: baris yang sudah/sedang dikonfirmasi diabaikan.
                     if (doc.status !== 'processed' || doc._confirming) return;
                     doc._confirming = true;
                     btn.disabled = true;
@@ -468,7 +445,6 @@
 
             selAll.addEventListener('change', function () {
                 if (selAll.disabled) return;
-                // Hanya centang checkbox baris yang masih tampil (bisa dikonfirmasi).
                 resultList.querySelectorAll('.row-check').forEach(c => {
                     if (!c.closest('.row-check-wrap').classList.contains('hidden')) {
                         c.checked = selAll.checked;
@@ -479,8 +455,7 @@
 
             confirmBtn.addEventListener('click', async function () {
                 if (confirmBtn.disabled) return;
-                // Hanya dokumen berstatus processed yang dikirim — yang sudah
-                // terlanjur confirmed (mis. dari tombol per baris) dilewati.
+                // yang terlanjur confirmed lewat tombol per baris dilewati
                 const ids = Array.from(resultList.querySelectorAll('.row-check:checked'))
                     .map(c => c.closest('li[data-id]').dataset.id)
                     .filter(id => { const d = findDoc(id); return d && d.status === 'processed'; });
@@ -504,12 +479,11 @@
                 refreshBulkUi();
             });
 
-            // ================= Submit upload (AJAX) =================
-
+            // submit upload (AJAX)
             form.addEventListener('submit', async function (e) {
                 e.preventDefault();
                 if (store.length === 0) return;
-                if (busy) return;          // anti dobel-submit / spam click
+                if (busy) return; // anti dobel-submit
                 busy = true;
 
                 submitBtn.disabled = true;
@@ -533,7 +507,6 @@
 
                     const batch = await res.json();
 
-                    // Kosongkan pilihan file & aktifkan lagi form untuk upload berikutnya.
                     store = [];
                     syncInput();
                     render();
@@ -548,25 +521,19 @@
                 }
             });
 
-            // Tampilkan pekerjaan berjalan dari server (tahan refresh/sleep):
-            // yang 'pending' otomatis dilanjut, yang 'processed' menunggu
-            // konfirmasi di sini — tidak hilang sebelum dikonfirmasi/dihapus.
+            // lanjutkan pekerjaan dari server: pending diproses lagi, processed menunggu konfirmasi
             localStorage.removeItem(BATCH_KEY);
             if (UNFINISHED.length > 0) {
                 runQueue(UNFINISHED);
             }
 
-            // ================= Interaksi pemilihan file =================
-
-            // Klik dropzone -> buka dialog file
+            // pemilihan file
             dropzone.addEventListener('click', () => input.click());
 
-            // Pilih file lewat dialog: gabungkan (bukan timpa)
             input.addEventListener('change', function () {
                 addFiles(input.files);
             });
 
-            // Drag & drop
             ['dragenter', 'dragover'].forEach(ev => dropzone.addEventListener(ev, e => {
                 e.preventDefault();
                 dropzone.classList.add('border-pine', 'bg-pine-soft/50');
@@ -579,7 +546,6 @@
                 if (e.dataTransfer && e.dataTransfer.files) addFiles(e.dataTransfer.files);
             });
 
-            // Aksi di daftar (preview / remove) via event delegation
             listEl.addEventListener('click', function (e) {
                 const btn = e.target.closest('button[data-act]');
                 if (!btn) return;

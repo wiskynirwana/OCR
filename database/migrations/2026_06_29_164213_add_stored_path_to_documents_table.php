@@ -9,8 +9,6 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('documents', function (Blueprint $table) {
-            // Lokasi file PDF asli di storage.
-            // Dipakai nanti pas confirm rename / pindah ke output final.
             $table->string('stored_path')->nullable()->after('original_filename');
         });
     }

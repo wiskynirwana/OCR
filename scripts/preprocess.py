@@ -12,18 +12,14 @@ def threshold_profile(img):
 def blue_flatten(img):
     h, w = img.shape[:2]
 
-    # AKTE punya background biru/cyan.
-    # Di channel biru, background jadi terang dan teks tetap gelap.
+    # background akte biru/cyan: di channel biru bg jadi terang, teks tetap gelap
     b, g, r = cv2.split(img)
 
-    # Ratain background:
-    # morphological close = nebak bentuk background besar
-    # divide = ngurangin tekstur biru + cahaya gak rata
+    # close = estimasi background, divide = buang tekstur biru + cahaya gak rata
     k = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (51, 51))
     bg = cv2.morphologyEx(b, cv2.MORPH_CLOSE, k)
     norm = cv2.divide(b, bg, scale=255)
 
-    # Bikin binary: teks hitam, background putih
     _, th = cv2.threshold(
         norm,
         0,
@@ -31,8 +27,7 @@ def blue_flatten(img):
         cv2.THRESH_BINARY + cv2.THRESH_OTSU
     )
 
-    # Crop baris nama anak di akte
-    # Ini posisi yang tadi kebukti pas buat file akte lu
+    # posisi baris nama anak, rasio tetap layout akte Dukcapil
     line = th[
         int(h * 0.535):int(h * 0.550),
         int(w * 0.20):int(w * 0.85)
@@ -40,8 +35,7 @@ def blue_flatten(img):
 
     lh, lw = line.shape
 
-    # Buang titik-titik leader / garis putus-putus.
-    # Nama punya tinta lebih padat dibanding titik-titik.
+    # buang titik-titik leader: nama tintanya lebih padat dari titik-titik
     inv = (255 - line) > 0
     colsum = inv.sum(0).astype(float)
     cols = np.where(colsum > lh * 0.30)[0]
@@ -53,13 +47,11 @@ def blue_flatten(img):
 
     crop = line[:, max(0, c0 - 15):c1 + 15]
 
-    # Perbesar biar Tesseract enak baca
+    # perbesar + rebinarisasi + border putih biar tesseract enak baca
     out = cv2.resize(crop, None, fx=3, fy=3, interpolation=cv2.INTER_CUBIC)
 
-    # Bersihin lagi setelah resize
     _, out = cv2.threshold(out, 127, 255, cv2.THRESH_BINARY)
 
-    # Kasih border putih biar teks gak mepet pinggir
     out = cv2.copyMakeBorder(
         out,
         50, 50, 60, 60,
@@ -68,28 +60,24 @@ def blue_flatten(img):
     )
 
     return out
-    img = cv2.imread(in_path)              # BGR
+    img = cv2.imread(in_path)
     h, w = img.shape[:2]
-    b, g, r = cv2.split(img)               # background biru → di channel BIRU jadi terang, teks gelap
+    b, g, r = cv2.split(img)
 
-    # 1) ratain background: estimasi bg via morphological close, lalu dibagi (buang tekstur biru + cahaya gak rata)
     k = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (51, 51))
     bg = cv2.morphologyEx(b, cv2.MORPH_CLOSE, k)
     norm = cv2.divide(b, bg, scale=255)
-    _, th = cv2.threshold(norm, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)  # teks hitam, bg putih
+    _, th = cv2.threshold(norm, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
 
-    # 2) crop cuma BARIS NAMA anak (rasio tetap layout akte Dukcapil)
     line = th[int(h*0.535):int(h*0.550), int(w*0.20):int(w*0.85)]
     lh, lw = line.shape
 
-    # 3) buang titik-titik leader: ambil kolom yang padat tinta aja
     inv = (255 - line) > 0
     colsum = inv.sum(0).astype(float)
     cols = np.where(colsum > lh*0.30)[0]
     c0, c1 = (int(cols.min()), int(cols.max())) if len(cols) else (0, lw)
     crop = line[:, max(0, c0-15):c1+15]
 
-    # 4) perbesar 3x + bersihin + border buat tesseract
     out = cv2.resize(crop, None, fx=3, fy=3, interpolation=cv2.INTER_CUBIC)
     _, out = cv2.threshold(out, 127, 255, cv2.THRESH_BINARY)
     out = cv2.copyMakeBorder(out, 50, 50, 60, 60, cv2.BORDER_CONSTANT, value=255)
@@ -97,12 +85,11 @@ def blue_flatten(img):
 
 
 def kk_grid_profile(img):
-    # Resep KK final (tervalidasi Fase 0) + deteksi baris OTOMATIS.
-    # Ngikut jumlah anggota: 1 orang atau belasan, kebaca semua.
-    # Asumsi render 300 DPI (pdftoppm -r 300) -> ~2480x3509.
+    # Baca kolom Nama di tabel KK, jumlah baris fleksibel (1 orang sampai belasan).
+    # Rasio-rasio di bawah nempel ke render 300 DPI (~2480x3509).
     h, w = img.shape[:2]
 
-    # 1. Region kolom Nama di tabel anggota keluarga (rasio halaman)
+    # region kolom Nama (rasio halaman)
     xa, xb = int(w * 0.100), int(w * 0.232)
     ya, yb = int(h * 0.382), int(h * 0.475)
     region = img[ya:yb, xa:xb]
@@ -110,7 +97,7 @@ def kk_grid_profile(img):
     _, bw = cv2.threshold(g, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
     H, Wd = bw.shape
 
-    # 2. Deteksi garis horizontal (pemisah baris) pakai kernel horizontal panjang
+    # deteksi garis pemisah baris pakai kernel horizontal panjang
     hk = cv2.getStructuringElement(cv2.MORPH_RECT, (int(Wd * 0.5), 1))
     hl = cv2.morphologyEx(bw, cv2.MORPH_OPEN, hk)
     rp = hl.sum(axis=1)
@@ -127,26 +114,25 @@ def kk_grid_profile(img):
                 cur = [v]
         lines.append(int(sum(cur) / len(cur)))
 
-    # 3. Ambil HANYA baris yang ada tulisannya (baris kosong di-skip)
     imgs = []
     for i in range(len(lines) - 1):
         top, bot = lines[i], lines[i + 1]
         if bot - top < 18:
             continue
-        cell = g[top + 5:bot - 5, :]  # margin 5px buang garis tanpa hapus manual
+        cell = g[top + 5:bot - 5, :]  # margin 5px buang sisa garis tabel
         if cell.size == 0:
             continue
         if (cell < 128).mean() < 0.04:  # baris kosong -> skip
             continue
         _, t = cv2.threshold(cell, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-        imgs.append(t)  # hitam-putih -> tesseract bisa baca (grayscale malah kosong)
+        imgs.append(t)  # harus binary, grayscale malah kosong di tesseract
 
     if not imgs:
         raise RuntimeError("Gak ada nama kedeteksi di tabel KK")
 
     print(f"[debug] jumlah nama kedeteksi = {len(imgs)}", file=sys.stderr)
 
-    # 4. Tumpuk semua nama + sekat putih antar baris
+    # tumpuk semua nama jadi 1 gambar, disekat putih antar baris
     W = max(i.shape[1] for i in imgs)
     sep = np.full((45, W), 255, np.uint8)
     canvas = [sep]
@@ -156,7 +142,6 @@ def kk_grid_profile(img):
         canvas += [pad, sep]
     stack = np.vstack(canvas)
 
-    # 5. Perbesar 3x + hitam-putihkan + bingkai putih (bagus buat OCR)
     stack = cv2.resize(stack, None, fx=3, fy=3, interpolation=cv2.INTER_CUBIC)
     _, stack = cv2.threshold(stack, 127, 255, cv2.THRESH_BINARY)
     stack = cv2.copyMakeBorder(stack, 40, 40, 60, 60, cv2.BORDER_CONSTANT, value=255)
