@@ -30,8 +30,8 @@
             @endif
 
             @php
-                $data = $document->extracted ?? [];
-                $type = $document->doc_type;
+                $data = $document->hasil_ekstraksi ?? [];
+                $type = $document->jenis_dokumen;
             @endphp
 
             <div class="md:grid md:grid-cols-3 md:gap-6">
@@ -42,12 +42,12 @@
 
                         <div>
                             <div class="text-xs uppercase tracking-wider text-ink-faint">File Asli</div>
-                            <div class="mt-0.5 text-ink break-words">{{ $document->original_filename }}</div>
+                            <div class="mt-0.5 text-ink break-words">{{ $document->nama_file_asli }}</div>
                         </div>
 
                         <div>
                             <div class="text-xs uppercase tracking-wider text-ink-faint">Kategori Dokumen</div>
-                            <div class="mt-0.5 text-ink">{{ strtoupper($document->doc_type ?? '-') }}</div>
+                            <div class="mt-0.5 text-ink">{{ strtoupper($document->jenis_dokumen ?? '-') }}</div>
                         </div>
 
                         <div>
@@ -68,23 +68,23 @@
                         @if ($document->status === 'error')
                             <div class="border-l-4 border-danger bg-danger-soft text-danger-dark p-3 rounded-r-lg text-sm">
                                 <strong>Error:</strong><br>
-                                {{ $document->error_message }}
+                                {{ $document->pesan_error }}
                             </div>
                         @endif
 
                         <div>
                             <div class="text-xs uppercase tracking-wider text-ink-faint">Nama File Baru</div>
                             <div class="mt-1 p-3 bg-paper/60 border border-line rounded-lg font-mono text-sm text-ink break-all">
-                                {{ $document->new_filename ?? '-' }}
+                                {{ $document->nama_file_baru ?? '-' }}
                             </div>
                         </div>
 
-                        @if ($document->stored_path)
+                        @if ($document->lokasi_file)
                             <div>
                                 <button type="button"
                                     class="js-preview btn-ghost w-full"
                                     data-url="{{ route('documents.file', $document) }}"
-                                    data-title="{{ $document->original_filename }}">
+                                    data-title="{{ $document->nama_file_asli }}">
                                     Lihat Dokumen
                                 </button>
                             </div>
@@ -114,7 +114,7 @@
                             @csrf
                             @method('PATCH')
 
-                            @if (in_array($type, ['sk', 'spk'], true))
+                            @if ($type === 'spk')
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
 
                                     <div>
@@ -131,16 +131,12 @@
 
                                     <div>
                                         <label class="field-label">Status Pegawai</label>
-                                        @if ($type === 'sk')
-                                            <input type="text" name="status_pegawai" value="PTY" class="field bg-line/40" readonly>
-                                        @else
-                                            @php $statusValue = old('status_pegawai', $data['status'] ?? ''); @endphp
-                                            <select name="status_pegawai" class="field">
-                                                <option value="">- Pilih Status -</option>
-                                                <option value="KONTRAK" {{ $statusValue === 'KONTRAK' ? 'selected' : '' }}>KONTRAK</option>
-                                                <option value="PTY" {{ $statusValue === 'PTY' ? 'selected' : '' }}>PTY</option>
-                                            </select>
-                                        @endif
+                                        @php $statusValue = old('status_pegawai', $data['status'] ?? ''); @endphp
+                                        <select name="status_pegawai" class="field">
+                                            <option value="">- Pilih Status -</option>
+                                            <option value="KONTRAK" {{ $statusValue === 'KONTRAK' ? 'selected' : '' }}>KONTRAK</option>
+                                            <option value="PTY" {{ $statusValue === 'PTY' ? 'selected' : '' }}>PTY</option>
+                                        </select>
                                     </div>
 
                                     <div>

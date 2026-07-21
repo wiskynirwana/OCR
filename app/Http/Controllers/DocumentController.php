@@ -24,8 +24,8 @@ class DocumentController extends Controller
 
     public function destroy(Request $request, Document $document)
     {
-        if ($document->stored_path && Storage::exists($document->stored_path)) {
-            Storage::delete($document->stored_path);
+        if ($document->lokasi_file && Storage::exists($document->lokasi_file)) {
+            Storage::delete($document->lokasi_file);
         }
 
         $document->delete();
@@ -48,8 +48,8 @@ class DocumentController extends Controller
         $documents = Document::whereIn('id', $data['ids'])->get();
 
         foreach ($documents as $document) {
-            if ($document->stored_path && Storage::exists($document->stored_path)) {
-                Storage::delete($document->stored_path);
+            if ($document->lokasi_file && Storage::exists($document->lokasi_file)) {
+                Storage::delete($document->lokasi_file);
             }
         }
 

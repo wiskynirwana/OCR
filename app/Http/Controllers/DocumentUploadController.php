@@ -49,7 +49,7 @@ class DocumentUploadController extends Controller
             default => null,
         };
 
-        $batchId = \Illuminate\Support\Str::uuid()->toString();
+        $folder = \Illuminate\Support\Str::uuid()->toString();
 
         // OCR tidak dijalankan di sini biar respons cepat — diproses per file
         // via AJAX dari halaman upload (processOne)
@@ -60,18 +60,18 @@ class DocumentUploadController extends Controller
             $hash = md5_file($file->getRealPath()) ?: null;
 
             $created[] = Document::create([
-                'batch_id' => $batchId,
-                'original_filename' => $file->getClientOriginalName(),
-                'stored_path' => $file->store('uploads/originals'),
-                'file_hash' => $hash,
-                'doc_type' => $knownType,
+                'folder' => $folder,
+                'nama_file_asli' => $file->getClientOriginalName(),
+                'lokasi_file' => $file->store('uploads/originals'),
+                'hash_file' => $hash,
+                'jenis_dokumen' => $knownType,
                 'status' => 'pending',
             ]);
         }
 
         if ($request->wantsJson()) {
             return response()->json([
-                'batch_id' => $batchId,
+                'folder' => $folder,
                 'documents' => collect($created)->map(fn (Document $d) => $this->docPayload($d))->values(),
             ]);
         }
@@ -84,11 +84,11 @@ class DocumentUploadController extends Controller
     {
         return [
             'id' => $d->id,
-            'name' => $d->original_filename,
-            'new_filename' => $d->new_filename,
-            'doc_type' => $d->doc_type,
+            'name' => $d->nama_file_asli,
+            'new_filename' => $d->nama_file_baru,
+            'doc_type' => $d->jenis_dokumen,
             'status' => $d->status,
-            'error_message' => $d->error_message,
+            'error_message' => $d->pesan_error,
             'duplicate_of' => $this->duplicateNames($d),
             'process_url' => route('documents.process', $d),
             'confirm_url' => route('documents.confirm', $d),
@@ -103,14 +103,14 @@ class DocumentUploadController extends Controller
     {
         return Document::where('id', '!=', $d->id)
             ->where(function ($q) use ($d) {
-                $q->where('original_filename', $d->original_filename);
-                if ($d->file_hash) {
-                    $q->orWhere('file_hash', $d->file_hash);
+                $q->where('nama_file_asli', $d->nama_file_asli);
+                if ($d->hash_file) {
+                    $q->orWhere('hash_file', $d->hash_file);
                 }
             })
             ->orderBy('id')
             ->limit(5)
-            ->pluck('original_filename')
+            ->pluck('nama_file_asli')
             ->unique()
             ->values()
             ->all();
@@ -134,7 +134,7 @@ class DocumentUploadController extends Controller
                 $ok = $confirmer->confirm($document);
                 $results[] = ['id' => $document->id, 'ok' => $ok, 'status' => $document->status];
             } catch (\Throwable $e) {
-                $document->update(['status' => 'error', 'error_message' => $e->getMessage()]);
+                $document->update(['status' => 'error', 'pesan_error' => $e->getMessage()]);
                 $results[] = ['id' => $document->id, 'ok' => false, 'status' => 'error'];
             }
         }
@@ -154,8 +154,8 @@ class DocumentUploadController extends Controller
 
         $document = $processor->process(
             $document,
-            Storage::path($document->stored_path),
-            $document->doc_type
+            Storage::path($document->lokasi_file),
+            $document->jenis_dokumen
         );
 
         return response()->json($this->docPayload($document));
@@ -168,10 +168,10 @@ class DocumentUploadController extends Controller
 
     public function updateReview(Request $request, Document $document, FilenameBuilder $filenameBuilder)
     {
-        $type = $document->doc_type;
+        $type = $document->jenis_dokumen;
 
         // ambil data OCR lama biar field yang gak tampil di form gak ikut hilang
-        $data = $document->extracted ?? [];
+        $data = $document->hasil_ekstraksi ?? [];
 
         if ($type === 'spk') {
             $validated = $request->validate([
@@ -193,8 +193,8 @@ class DocumentUploadController extends Controller
         $newFilename = $filenameBuilder->build($type, $data);
 
         $document->update([
-            'extracted' => $data,
-            'new_filename' => $newFilename,
+            'hasil_ekstraksi' => $data,
+            'nama_file_baru' => $newFilename,
         ]);
 
         return redirect()
@@ -207,9 +207,9 @@ class DocumentUploadController extends Controller
         $error = null;
         if ($document->status !== 'processed') {
             $error = 'Dokumen belum siap dikonfirmasi.';
-        } elseif (!$document->new_filename) {
+        } elseif (!$document->nama_file_baru) {
             $error = 'Nama file baru masih kosong.';
-        } elseif (!$document->stored_path || !Storage::exists($document->stored_path)) {
+        } elseif (!$document->lokasi_file || !Storage::exists($document->lokasi_file)) {
             $error = 'File asli tidak ditemukan di storage.';
         }
 
@@ -232,7 +232,7 @@ class DocumentUploadController extends Controller
     public function downloadIndex()
     {
         $groups = Document::where('status', 'confirmed')
-            ->whereNotNull('stored_path')
+            ->whereNotNull('lokasi_file')
             ->get()
             ->groupBy(fn (Document $doc) => $doc->archiveFolder())
             ->sortKeys();
@@ -248,7 +248,7 @@ class DocumentUploadController extends Controller
         ]);
 
         $documents = Document::where('status', 'confirmed')
-            ->whereNotNull('stored_path')
+            ->whereNotNull('lokasi_file')
             ->get();
 
         // kalau gak ada folder yang dipilih, unduh semua
@@ -293,13 +293,13 @@ class DocumentUploadController extends Controller
         $added = 0;
 
         foreach ($documents as $document) {
-            if (!\Illuminate\Support\Facades\Storage::exists($document->stored_path)) {
+            if (!\Illuminate\Support\Facades\Storage::exists($document->lokasi_file)) {
                 continue;
             }
 
-            $fullPath = \Illuminate\Support\Facades\Storage::path($document->stored_path);
+            $fullPath = \Illuminate\Support\Facades\Storage::path($document->lokasi_file);
             // pertahankan struktur folder outputs/<folder>/<file>
-            $relativeName = str_replace('outputs/', '', $document->stored_path);
+            $relativeName = str_replace('outputs/', '', $document->lokasi_file);
             $relativeName = str_replace('\\', '/', $relativeName);
             $zip->addFile($fullPath, $relativeName);
             $added++;
@@ -318,13 +318,13 @@ class DocumentUploadController extends Controller
     public function file(Document $document)
     {
         abort_unless(
-            $document->stored_path && Storage::exists($document->stored_path),
+            $document->lokasi_file && Storage::exists($document->lokasi_file),
             404
         );
 
         return Storage::response(
-            $document->stored_path,
-            $document->original_filename ?: 'dokumen.pdf',
+            $document->lokasi_file,
+            $document->nama_file_asli ?: 'dokumen.pdf',
             ['Content-Type' => 'application/pdf']
         );
     }

@@ -108,10 +108,10 @@
                             @foreach ($recentDocs as $i => $doc)
                             <tr class="hover:bg-paper/50 transition-colors">
                                 <td class="px-4 py-3 text-ink">
-                                    {{ \Illuminate\Support\Str::limit($doc->original_filename, 35) }}
+                                    {{ \Illuminate\Support\Str::limit($doc->nama_file_asli, 35) }}
                                 </td>
                                 <td class="px-4 py-3 font-mono text-xs text-ink-soft">
-                                    {{ $doc->new_filename ?? '-' }}
+                                    {{ $doc->nama_file_baru ?? '-' }}
                                 </td>
                                 <td class="px-4 py-3">
                                     @if ($doc->status === 'confirmed')
@@ -124,11 +124,11 @@
                                     {{ $doc->updated_at->diffForHumans() }}
                                 </td>
                                 <td class="px-4 py-3 text-xs">
-                                    @if ($doc->stored_path)
+                                    @if ($doc->lokasi_file)
                                         <button type="button"
                                             class="js-preview font-medium text-pine hover:underline"
                                             data-url="{{ route('documents.file', $doc) }}"
-                                            data-title="{{ $doc->original_filename }}">Lihat</button>
+                                            data-title="{{ $doc->nama_file_asli }}">Lihat</button>
                                     @else
                                         <span class="text-ink-faint">-</span>
                                     @endif

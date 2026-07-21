@@ -66,8 +66,8 @@
                                         <td class="p-3">
                                             <input type="checkbox" name="ids[]" value="{{ $doc->id }}" class="row-check rounded border-line text-pine focus:ring-pine/30">
                                         </td>
-                                        <td class="p-3 text-ink"> {{$doc->original_filename}} </td>
-                                        <td class="p-3 font-mono text-xs text-ink-soft"> {{$doc->new_filename ?? '-'}} </td>
+                                        <td class="p-3 text-ink"> {{$doc->nama_file_asli}} </td>
+                                        <td class="p-3 font-mono text-xs text-ink-soft"> {{$doc->nama_file_baru ?? '-'}} </td>
                                         <td class="p-3">
                                             @if ($doc->status === 'confirmed')
                                                 <span class="badge-success">{{ $doc->status }}</span>
@@ -80,11 +80,11 @@
                                             @endif
                                         </td>
                                         <td class="p-3 space-x-3 whitespace-nowrap">
-                                            @if ($doc->stored_path)
+                                            @if ($doc->lokasi_file)
                                                 <button type="button"
                                                     class="js-preview font-medium text-pine hover:underline"
                                                     data-url="{{ route('documents.file', $doc) }}"
-                                                    data-title="{{ $doc->original_filename }}">Lihat</button>
+                                                    data-title="{{ $doc->nama_file_asli }}">Lihat</button>
                                             @else
                                                 <span class="text-ink-faint text-xs">-</span>
                                             @endif

@@ -1,6 +1,6 @@
 <?php
 return [
-    // Deteksi jenis dari signature judul (sisanya via ciri lain: KTP/AKTE/KK)
+    // Deteksi jenis dari signature judul di hasil OCR
     'templates' => [
         'keputusan' => ['KEPUTUSAN PENGURUS'],
         'spk'       => ['SURAT PERJANJIAN KERJA'],
@@ -8,12 +8,8 @@ return [
 
     // Format nama file per jenis
     'naming' => [
-        'sk'        => '{KODE} {STATUS} {TANGGAL} - {SEQ} {NAMA}',
         'spk'       => '{KODE} {STATUS} {TANGGAL} - {SEQ} {NAMA}',
         'keputusan' => '{KODE} {STATUS} {TANGGAL} - {SEQ} {NAMA}',
-        'ktp'       => 'KTP {NAMA}',
-        'akte'      => 'AKTE {NAMA}',
-        'kk'        => 'KK {NAMA}',
     ],
 
     // Map bulan teks → angka (buat tanggal Keputusan)
@@ -23,14 +19,10 @@ return [
         'september'=>'09','oktober'=>'10','november'=>'11','desember'=>'12',
     ],
 
-    // Profil preprocessing per jenis (dipakai Fase 2)
+    // Profil preprocessing per jenis
     'preprocess' => [
-        'sk'        => ['mode' => 'threshold',     'psm' => 3],
-        'spk'       => ['mode' => 'threshold',     'psm' => 3],
-        'keputusan' => ['mode' => 'threshold',     'psm' => 3],
-        'ktp'       => ['mode' => 'threshold',     'psm' => 3],
-        'akte'      => ['mode' => 'blue_flatten',  'psm' => 8],
-        'kk'        => ['mode' => 'kk_grid',       'psm' => 6],
+        'spk'       => ['mode' => 'threshold', 'psm' => 3],
+        'keputusan' => ['mode' => 'threshold', 'psm' => 3],
     ],
 
 ];

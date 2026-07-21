@@ -13,21 +13,10 @@ class DocumentParser
 
     public function parse(string $type, string $text): array
     {
-      return match ($type) {
-    'sk', 'spk', 'keputusan' => $this->parseSurat($type, $text),
-
-    'ktp' => [
-        'nama' => $this->namaUmum($text),
-    ],
-
-    'akte' => [
-        'nama' => $this->namaAkte($text),
-    ],
-
-    'kk' => $this->parseKk($text),
-
-    default => [],
-};
+        return match ($type) {
+            'spk', 'keputusan' => $this->parseSurat($type, $text),
+            default => [],
+        };
     }
 
     private function parseSurat(string $type, string $text): array
@@ -36,7 +25,7 @@ class DocumentParser
             'kode'    => $this->kode($text),
             'seq'     => $this->seq($text),
             'status'  => $this->status($text),
-            // SPK tanggalnya format "(dd/mm/yyyy)", SK/Keputusan pakai tanggal teks
+            // SPK tanggalnya format "(dd/mm/yyyy)", Keputusan pakai tanggal teks
             'tanggal' => $type === 'spk' ? $this->tanggalSpk($text) : $this->tanggalKeputusan($text),
             // nama di SPK adanya di daftar pihak "2. NAMA, lahir...", bukan baris "Nama :"
             'nama'    => $type === 'spk' ? $this->namaSpk($text) : $this->namaUmum($text),
@@ -106,22 +95,4 @@ class DocumentParser
         }
         return null;
     }
-
-private function parseKk(string $text): array
-{
-    // tiap baris hasil OCR tabel KK = 1 nama anggota
-    $anggota = array_values(array_filter(array_map('trim', explode("\n", $text))));
-    return [
-        'kepala_keluarga' => $anggota[0] ?? null,  // default; bisa diganti di review page
-        'anggota'         => $anggota,
-    ];
-}
-private function namaAkte(string $text): ?string
-{
-    $nama = preg_replace('/[^A-Za-z]/', ' ', $text);
-    $nama = preg_replace('/\s+/', ' ', trim($nama));
-    $nama = strtoupper($nama);
-
-    return $nama !== '' ? $nama : null;
-}
 }

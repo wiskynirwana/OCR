@@ -6,10 +6,12 @@ use Illuminate\Database\Eloquent\Model;
 
 class ProcessingLog extends Model
 {
-    protected $fillable = ['document_id', 'step', 'level', 'message'];
+    protected $table = 'log_proses';
+
+    protected $fillable = ['dokumen_id', 'tahap', 'level', 'pesan'];
 
     public function document()
     {
-        return $this->belongsTo(Document::class);
+        return $this->belongsTo(Document::class, 'dokumen_id');
     }
 }

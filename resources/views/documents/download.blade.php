@@ -56,14 +56,14 @@
                                 @foreach ($docs as $doc)
                                     <li class="flex items-center justify-between gap-3 ps-11 pe-4 py-2">
                                         <span class="min-w-0 flex-1 truncate font-mono text-xs text-ink-soft"
-                                              title="{{ $doc->new_filename }}">
-                                            {{ $doc->new_filename ?? $doc->original_filename }}
+                                              title="{{ $doc->nama_file_baru }}">
+                                            {{ $doc->nama_file_baru ?? $doc->nama_file_asli }}
                                         </span>
-                                        @if ($doc->stored_path)
+                                        @if ($doc->lokasi_file)
                                             <button type="button"
                                                 class="js-preview flex-shrink-0 text-xs font-medium text-pine hover:underline"
                                                 data-url="{{ route('documents.file', $doc) }}"
-                                                data-title="{{ $doc->new_filename ?? $doc->original_filename }}">
+                                                data-title="{{ $doc->nama_file_baru ?? $doc->nama_file_asli }}">
                                                 Preview
                                             </button>
                                         @endif

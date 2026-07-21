@@ -23,7 +23,7 @@ class DocumentProcessor
         $pages = [];
 
         try {
-            $this->log($document, 'mulai', 'info', "Memproses {$document->original_filename}");
+            $this->log($document, 'mulai', 'info', "Memproses {$document->nama_file_asli}");
 
             // halaman pertama yang dipakai buat penamaan
             $pages = $this->pdf->convert($pdfPath);
@@ -41,7 +41,7 @@ class DocumentProcessor
 
             if (!$type) {
                 // gak ketebak → user isi manual di review page
-                $document->update(['status' => 'error', 'error_message' => 'Jenis dokumen tidak dikenali']);
+                $document->update(['status' => 'error', 'pesan_error' => 'Jenis dokumen tidak dikenali']);
                 return $document;
             }
 
@@ -52,20 +52,16 @@ class DocumentProcessor
 
             $extracted = $this->parser->parse($type, $ocrText);
 
-            // KK: "atas nama" default kepala keluarga, bisa diganti di review
-            if ($type === 'kk') {
-                $extracted['nama'] = $extracted['kepala_keluarga'] ?? null;
-            }
             $newFilename = $this->builder->build($type, $extracted);
             $this->log($document, 'penamaan', 'info', "Usulan nama: {$newFilename}");
 
             // status 'processed' = masih nunggu konfirmasi user, file belum di-rename
             $document->update([
-                'doc_type'     => $type,
-                'extracted'    => $extracted,
-                'ocr_text'     => $ocrText,
-                'new_filename' => $newFilename,
-                'status'       => 'processed',
+                'jenis_dokumen'   => $type,
+                'hasil_ekstraksi' => $extracted,
+                'teks_ocr'        => $ocrText,
+                'nama_file_baru'  => $newFilename,
+                'status'          => 'processed',
             ]);
 
             $this->log($document, 'selesai', 'info', 'Dokumen siap direview');
@@ -74,7 +70,7 @@ class DocumentProcessor
         } catch (Throwable $e) {
             // satu file error jangan sampai matiin proses batch
             $this->log($document, 'error', 'error', $e->getMessage());
-            $document->update(['status' => 'error', 'error_message' => $e->getMessage()]);
+            $document->update(['status' => 'error', 'pesan_error' => $e->getMessage()]);
             return $document;
         } finally {
             // hapus temp hasil konversi biar storage/app/temp gak numpuk gambar 300 DPI
@@ -84,13 +80,13 @@ class DocumentProcessor
         }
     }
 
-    private function log(Document $document, string $step, string $level, string $message): void
+    private function log(Document $document, string $tahap, string $level, string $pesan): void
     {
-            ProcessingLog::create([
-            'document_id' => $document->id,
-            'step'        => $step,
-            'level'       => $level,
-            'message'     => $message,
+        ProcessingLog::create([
+            'dokumen_id' => $document->id,
+            'tahap'      => $tahap,
+            'level'      => $level,
+            'pesan'      => $pesan,
         ]);
     }
 }

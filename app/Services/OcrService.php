@@ -8,12 +8,8 @@ use Symfony\Component\Process\Exception\ProcessFailedException;
 class OcrService
 {
     public const PSM = [
-        'sk'        => 3,
         'spk'       => 3,
         'keputusan' => 3,
-        'ktp'       => 3,
-        'akte'      => 8,
-        'kk'        => 6,
     ];
 
     private string $binary;

@@ -14,15 +14,15 @@ class DocumentConfirmer
             return false;
         }
 
-        if (!$document->new_filename) {
+        if (!$document->nama_file_baru) {
             return false;
         }
 
-        if (!$document->stored_path || !Storage::exists($document->stored_path)) {
+        if (!$document->lokasi_file || !Storage::exists($document->lokasi_file)) {
             return false;
         }
 
-        $finalName = $document->new_filename;
+        $finalName = $document->nama_file_baru;
 
         if (!str_ends_with(strtolower($finalName), '.pdf')) {
             $finalName .= '.pdf';
@@ -38,10 +38,10 @@ class DocumentConfirmer
             $targetPath = "outputs/{$folder}/{$nameOnly} - " . now()->format('YmdHis') . ".{$extension}";
         }
 
-        Storage::move($document->stored_path, $targetPath);
+        Storage::move($document->lokasi_file, $targetPath);
 
         $document->update([
-            'stored_path' => $targetPath,
+            'lokasi_file' => $targetPath,
             'status' => 'confirmed',
         ]);
 
